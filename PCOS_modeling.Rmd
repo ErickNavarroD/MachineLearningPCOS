@@ -1,0 +1,38 @@
+---
+title: "PCOS modeling"
+author: "Erick Navarro"
+date: "2023-01-25"
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 4
+---
+
+## Introduction
+
+
+## Load data and packages
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(glmnet)
+library(caret)
+library(here)
+
+#Make the code reproducible
+set.seed(123)
+#load the data
+
+```
+
+## Logistic regression modeling
+
+### Ridge regression
+
+### LASSO regression
+
+### Elastic net regression 
+
+
+## Trees modeling
+
