@@ -198,7 +198,7 @@ According to [reference values](https://www.mountsinai.org/health-library/tests/
 
 ```{r}
 data[data$id == 330,"fsh" ] = NA
-data[data$id == 330,"fsh_lh" ] = NA
+data[data$id == 330,"fsh_lh_ratio" ] = NA
 ```
 
 I will also log10 transform the values because looking at the quartiles above, data is compressed in the left side of the histogram
@@ -233,7 +233,7 @@ The individual 456 has a LH level outside of the reported [reference levles](htt
 
 ```{r}
 data[data$id == 456,"lh" ] = NA
-data[data$id == 456,"fsh_lh" ] = NA
+data[data$id == 456,"fsh_lh_ratio" ] = NA
 
 data = data %>% 
   mutate(lh = log10(lh))
@@ -251,21 +251,21 @@ Since I have already removed outliers from the FSH and LH variables, the remaini
 ```{r}
 ## FSH/LH ratio
 data %>% 
-  ggplot(aes(x = "fsh_lh", y = fsh_lh)) +
+  ggplot(aes(x = "fsh_lh_ratio", y = fsh_lh_ratio)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 
 data %>% 
-  filter(fsh_lh > 250) %>% 
+  filter(fsh_lh_ratio > 250) %>% 
   pull(id)
 
 #I will flag this patient in case it pops out somewhere else in the analysis. 
 
 data = data %>% 
-  mutate(fsh_lh = log10(fsh_lh))
+  mutate(fsh_lh_ratio = log10(fsh_lh_ratio))
 
 data %>% 
-  ggplot(aes(x = "fsh_lh", y = fsh_lh)) +
+  ggplot(aes(x = "fsh_lh_ratio", y = fsh_lh_ratio)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 ```
