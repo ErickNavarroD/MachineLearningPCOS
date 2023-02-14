@@ -11,7 +11,7 @@ output:
 ## Introduction
 
 
-## Load data and packages
+## Setup
 
 ```{r setup, include=FALSE}
 library(tidyverse)
@@ -22,12 +22,75 @@ library(here)
 #Make the code reproducible
 set.seed(123)
 #load the data
+load(here("data.Rdata"))
+glimpse(data)
 
 ```
 
+Before doing the modeling, I will remove the variable "cycle_r_i", since I could find no information about what it is measuring neither in the documentation of the dataset nor online. Also, I will make the patient_file_no the rownames of the data set. 
+
+```{r}
+data = data %>% 
+  select(-cycle_r_i) %>% 
+  column_to_rownames("patient_file_no")
+```
+
+## Data splitting
+
+### Complete cases
+```{r}
+#Split the data into a training and a validation set
+data_complete_cases = data %>% 
+  drop_na()
+
+train.index <- caret::createDataPartition(data_complete_cases$pcos_y_n, p = .75, list=FALSE)
+
+train <- data_complete_cases[ train.index,]
+valid  <- data_complete_cases[-train.index,]
+
+#Check the negative/positive ration in the validation set
+table(train$pcos_y_n)
+table(train$pcos_y_n)[1]/ table(train$pcos_y_n)[2]
+
+#Check the negative/positive ration in the validation set
+table(valid$pcos_y_n)
+table(valid$pcos_y_n)[1]/ table(valid$pcos_y_n)[2]
+
+#Check the negative/positive ration in the original data set
+table(data_complete_cases$pcos_y_n)[1]/ table(data_complete_cases$pcos_y_n)[2]
+```
+
+
 ## Logistic regression modeling
 
-### Ridge regression
+### RIDGE regression
+
+For the RIDGE regression, I will start by finding the optimal lambda value using the function cv.glmnet(). I will do a 10-fold cross validation process to achieve this. 
+
+```{r}
+#convert training data to matrix format
+x_matrix <- model.matrix(pcos_y_n~.,train)
+
+#convert class to numerical variable
+response <- ifelse(train$pcos_y_n=="1",1,0)
+
+#perform grid search to find optimal value of lambda
+ridge.cv <- cv.glmnet(x_matrix,response,alpha=0,
+                      nfolds = 10,
+                      family="binomial",type.measure = "class" )
+#plot result
+plot(ridge.cv)
+```
+
+After doing this search, I will use the lambda that gives the simplest model but also lies within one standard error of the optimal value of lambda for the rest of my analysis. 
+
+```{r}
+#Check the lambda that I will use
+ridge.cv$lambda.1se
+
+coef(ridge.cv,s=ridge.cv$lambda.1se)
+```
+
 
 ### LASSO regression
 

@@ -440,6 +440,7 @@ data %>%
 Next, I will re plot the variables to see how the distribution of the variables changed. 
 ```{r}
 plot_histogram(data)
+plot_missing(data)
 ```
 
 ## Explore variation of categorical variables
