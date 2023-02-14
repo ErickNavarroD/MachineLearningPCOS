@@ -8,111 +8,162 @@ output:
     toc_depth: 4
 ---
 
-## Introduction 
+## 1 Introduction 
 
 The goal of this report is to conduct an exploratory data analysis (EDA) of [a publicly available dataset](https://www.kaggle.com/datasets/prasoonkottarathil/polycystic-ovary-syndrome-pcos?resource=download) of polycystic ovary syndrom (PCOS),  a hormonal disorder common among women of reproductive age. 
 
 This is the first step of the course project of developing a model to diagnose PCOS. On this deliverable, I will explore the dataset, clean it, and understand its variables. 
 
-## Load the data
+## 2 Exploratory Data Analysis
 
-First, I will load the packages that I will use throughout the analysis and the data. 
+### 2.1 Load libraries and data files
+The packages that need to be installed for this exploratory data analysis include 'janitor', 'tidyverse', 'DataExplorer', 'skimr', 'here', 'knitr' and 'readxl.' The names of the columns are cleaned using the janitor package.
 
 ```{r load packages and dataset, message=FALSE}
+# Load required libraries
 library(tidyverse)
 library(here)
 library(readxl)
 library(janitor)
 library(DataExplorer)
 library(knitr)
+library(skimr)
 
+# Load the data file to a data frame
 data = read_excel(here("PCOS_data_without_infertility.xlsx"), sheet = "Full_new") %>% 
   clean_names()
 ```
 
-
-## Clean the data
-
-Then, I will take a look at the data, remove redundant variables, and make sure that each column is formatted in the right data type. 
+### 2.2 Data preprocessing
+An overview of the data is shown using 'glimpse' and 'skim'.
 
 ```{r}
 glimpse(data)
+skim(data)
 ```
 
-By taking a quick look at the data, I can observe that sl_no and patient_file have apparently the same information. Also, the last column (x45) seems to be empty. I will remove those variables and change the format of the variables when needed. 
+The overview of the data reveals that sl_no and patient_file seem to have the same information. The majority of observations in the last column (x45) are missing (539 out of 541). The variables 'sl_no' and 'x45' have therefore been removed. 
+
+The names of the variables include the units of measure, making the variable names complex. These have been simplified to facilitate analysis. Finally, variables were mutated to the correct data types and factor levels have been specified.
 
 ```{r Check the variables}
-#looks like sl_no and patient_file_no are the same column? 
+# Confirm that sl_no and patient_file_no are the same column
 all(identical(data$sl_no, data$patient_file_no))
-#Also, column x45 looks like empty. I checked the excel file and it is an empty column
 
-#Clean and change the format of the dataset
+# Remove variables 'sl_no' and 'x45'
+data <- subset(data, select = -c(sl_no,x45))
+
+# Rename variables to simplify them
+data <- data %>% 
+  rename(
+    id = patient_file_no,
+    pcos = pcos_y_n,
+    age = age_yrs,
+    weight = weight_kg,
+    height = height_cm,
+    pulse_rate = pulse_rate_bpm,
+    rr = rr_breaths_min,
+    hb = hb_g_dl,
+    cycle = cycle_r_i,
+    cycle_length = cycle_length_days,
+    marriage_status = marraige_status_yrs,
+    pregnant = pregnant_y_n,
+    no_of_abortions = no_of_aborptions,
+    i_betahcg = i_beta_hcg_m_iu_m_l,
+    ii_betahcg = ii_beta_hcg_m_iu_m_l,
+    fsh = fsh_m_iu_m_l,
+    lh =lh_m_iu_m_l,
+    fsh_lh_ratio = fsh_lh,
+    hip = hip_inch,
+    waist = waist_inch,
+    tsh = tsh_m_iu_l,
+    amh = amh_ng_m_l,
+    prl = prl_ng_m_l,
+    vitd3 = vit_d3_ng_m_l,
+    prg = prg_ng_m_l,
+    rbs = rbs_mg_dl,
+    weight_gain = weight_gain_y_n,
+    hair_growth = hair_growth_y_n,
+    skin_darkening = skin_darkening_y_n,
+    hair_loss = hair_loss_y_n,
+    pimples = pimples_y_n,
+    fast_food = fast_food_y_n,
+    reg_exercise = reg_exercise_y_n,
+    bp_systolic = bp_systolic_mm_hg,
+    bp_diastolic = bp_diastolic_mm_hg,
+    avg_f_size_l = avg_f_size_l_mm,
+    avg_f_size_r = avg_f_size_r_mm,
+    endometrium = endometrium_mm
+    )
+
+# Mutate variables incorrectly labelled as character to numeric and those 
+# incorrectly labelled as numeric to factors
 data = data %>% 
-  select(-c(sl_no, x45)) %>% 
-  mutate(patient_file_no = as.character(patient_file_no),
-         pcos_y_n = as.factor(pcos_y_n),
-         ii_beta_hcg_m_iu_m_l = case_when(ii_beta_hcg_m_iu_m_l == "1.99."~ "1.99", #I found
+  mutate(id = as.character(id),
+         pcos = as.factor(pcos),
+         ii_betahcg = case_when(ii_betahcg == "1.99."~ "1.99", #I found
                                           #this typo when exploring the missing data and
                                           # checking the excel file of said individual
-                                          TRUE ~ ii_beta_hcg_m_iu_m_l),
-         ii_beta_hcg_m_iu_m_l = as.numeric(ii_beta_hcg_m_iu_m_l),
-         amh_ng_m_l = as.numeric(amh_ng_m_l),
-         #Recode the blood group to the right variable
-         blood_group = case_when(blood_group == 11 ~ "A+",
-                                 blood_group == 12 ~ "A-",
-                                 blood_group == 13 ~ "B+",
-                                 blood_group == 14 ~ "B-",
-                                 blood_group == 15 ~ "O+",
-                                 blood_group == 16 ~ "O-",
-                                 blood_group == 17 ~ "AB+",
-                                 blood_group == 18 ~ "AB-",),
-         pregnant_y_n = as.factor(pregnant_y_n),
-         weight_gain_y_n = as.factor(weight_gain_y_n),
-         hair_growth_y_n = as.factor(hair_growth_y_n),
-         skin_darkening_y_n = as.factor(skin_darkening_y_n),
-         hair_loss_y_n = as.factor(hair_loss_y_n),
-         pimples_y_n = as.factor(pimples_y_n),
-         fast_food_y_n = as.factor(fast_food_y_n),
-         reg_exercise_y_n = as.factor(reg_exercise_y_n))
+                                          TRUE ~ ii_betahcg),
+         ii_betahcg = as.numeric(ii_betahcg),
+         amh = as.numeric(amh),
+         blood_group = as.factor (blood_group),
+         pregnant = as.factor(pregnant),
+         weight_gain = as.factor(weight_gain),
+         hair_growth = as.factor(hair_growth),
+         skin_darkening = as.factor(skin_darkening),
+         hair_loss = as.factor(hair_loss),
+         pimples = as.factor(pimples),
+         fast_food = as.factor(fast_food),
+         reg_exercise = as.factor(reg_exercise))
 
-glimpse(data)
+# The levels of binary variables are set to 'No' and 'Yes' to assist analysis later
+levels(data$pcos)=c("No","Yes")
+levels(data$pregnant)=c("No","Yes")
+levels(data$weight_gain)=c("No","Yes")
+levels(data$hair_growth)=c("No","Yes")
+levels(data$skin_darkening)=c("No","Yes")
+levels(data$hair_loss)=c("No","Yes")
+levels(data$pimples)=c("No","Yes")
+levels(data$fast_food)=c("No","Yes")
+levels(data$reg_exercise)=c("No","Yes")
+levels(data$blood_group)=c("A+","A-","B+","B-","O+","O-","AB+","AB-")
+
+# Overview of the cleaned data
+skim(data)
 ```
+## 2.3 Missing values
+The missing variables are checked using the plot below.
 
-Now the data is in the right format, so we can proceed to plot it and explore it.
-
-## Explore missing values
-As a first step of the exploration, I will check the missingness of each variable in my dataset. 
 ```{r plot missing data, fig.dim = c(8, 10)}
 plot_missing(data)
 ```
-We can see that there is a missing value in the variables fast_food_y_n, marriage_status_yrs and amh_ng_m_l. I will explore if it's missing in the same person
+One missing value is recorded for the variables fast_food, marriage_status and amh. The code below aims to determine whether the missing data points are all for the same person.
 
 ```{r}
 data %>% 
-  filter(is.na(fast_food_y_n) | 
-           is.na(marraige_status_yrs) |
-           is.na(amh_ng_m_l)) %>% 
-  select(c(patient_file_no, fast_food_y_n, marraige_status_yrs, amh_ng_m_l)) %>% 
+  filter(is.na(fast_food) | 
+           is.na(marriage_status) |
+           is.na(amh)) %>% 
+  dplyr::select(c(id, fast_food, marriage_status, amh)) %>% 
   knitr::kable()
 ```
 
-We can observe that the individuals with missing observations are different. I will flag individuals 157, 306 and 456 in case this creates a problem later in the analysis, but since each of them have only one missing variable, I don't think it's needed to remove them. 
+We can observe that the individuals with missing observations are different, and thus these observations (rows) do not need to be removed at this stage. If missing variables end up in the training data set, these will be managed with multiple imputation.
 
-## Explore variation of continuous variables
-Now, I will explore the variability of the continuous variables in the dataset. 
+## 2.4 Variation in continuous variables
+The variability of continuous variables in the dataset are explored using the histograms below.
+ 
 ```{r}
 plot_histogram(data)
 ```
 
-### Explore outliers
-We can observe that the variables prg_ng_m_l and vit_d3_ng_m_l, fsh_lh, fsh_m_iu_m_l, i_beta_hcg_m_iu_m_l, ii_beta_hcg_m_iu_m_l and lh_m_iu_m_l and pulse_rate_bpm seem to have no variation. This could be happening because of the presence of outliers that make the data look like if it were invariant, or because of the data being non-variable in these variables. This can be checked by observing the summary of said variables. 
-I will explore them more in detail. 
-
+### 2.4.1 Outliers
+We can observe that the variables prg, vit_d3, fsh_lh, fsh, i_betahcg, ii_betahcg, lh and pulse_rate seem to have no variation. This could be happening because of the presence of outliers that make the data look like if it were invariant, or because of the data is not normally distributed in these variables. This can be checked by observing the summary of said variables. These are explored in detail.
 
 ```{r}
 data %>%
-  select(prg_ng_m_l, vit_d3_ng_m_l, fsh_lh, fsh_m_iu_m_l, i_beta_hcg_m_iu_m_l,
-           ii_beta_hcg_m_iu_m_l, lh_m_iu_m_l, pulse_rate_bpm) %>% 
+  dplyr::select(prg, vitd3, fsh_lh_ratio, fsh, i_betahcg, ii_betahcg, lh, pulse_rate) %>% 
   rownames_to_column(var = "ID") %>% 
   pivot_longer(-ID, names_to = "variables", values_to = "data") %>% 
   group_by(variables) %>% 
@@ -125,7 +176,7 @@ data %>%
   knitr::kable()
 ```
 
-By looking at the median and quartiles, we can observe that the data looks like non-variable because there are outliers that drag the distributions. I will check which samples are outliers for each of these variables. 
+By looking at the median and quartiles, we can observe that the data looks not to be normally distributed because there are outliers that drag the distributions. I will check which samples are outliers for each of these variables. 
 
 #### FSH hormone
 
@@ -133,35 +184,35 @@ Now, I will look for outliers in the FSH hormone
 ```{r}
 ## FSH hormone
 data %>% 
-  ggplot(aes(x = "fsh_m_iu_m_l", y = fsh_m_iu_m_l)) +
+  ggplot(aes(x = "fsh", y = fsh)) +
   geom_jitter(alpha = 0.5) +
   scale_y_log10()+
   xlab("")
 
 data %>% 
-  filter(fsh_m_iu_m_l > 1000) %>% 
-  pull(patient_file_no)
+  filter(fsh > 1000) %>% 
+  pull(id)
 ```
 
 According to [reference values](https://www.mountsinai.org/health-library/tests/follicle-stimulating-hormone-fsh-blood-test), this sample has an impossible biological value. Therefore, I will set this observation and related variables to NA. 
+
 ```{r}
-data[data$patient_file_no == 330,"fsh_m_iu_m_l" ] = NA
-data[data$patient_file_no == 330,"fsh_lh" ] = NA
+data[data$id == 330,"fsh" ] = NA
+data[data$id == 330,"fsh_lh_ratio" ] = NA
 ```
 
 I will also log10 transform the values because looking at the quartiles above, data is compressed in the left side of the histogram
 
 ```{r, m}
 data = data %>% 
-  mutate(fsh_m_iu_m_l = log10(fsh_m_iu_m_l))
+  mutate(fsh = log10(fsh))
 
 data %>% 
-  ggplot(aes(x = "fsh_m_iu_m_l", y = fsh_m_iu_m_l)) +
+  ggplot(aes(x = "fsh", y = fsh)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
   
 ```
-
 
 #### LH hormone
 
@@ -169,26 +220,26 @@ Now, I will look for outliers in the LH hormone
 ```{r}
 ## LH hormone 
 data %>% 
-  ggplot(aes(x = "lh_m_iu_m_l", y = lh_m_iu_m_l)) +
+  ggplot(aes(x = "lh", y = lh)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 
 data %>% 
-  filter(lh_m_iu_m_l > 1000) %>% 
-  pull(patient_file_no)
+  filter(lh > 1000) %>% 
+  pull(id)
 ```
 
 The individual 456 has a LH level outside of the reported [reference levles](https://www.urmc.rochester.edu/encyclopedia/content.aspx?ContentTypeID=167&ContentID=luteinizing_hormone_blood). Therefore, I will remove this variable and related ones and also log10-transform it. It is worth noticing that this individual is different to the one that had an anomalous FSH level, which supports the hypothesis if these values being technical mistakes.
 
 ```{r}
-data[data$patient_file_no == 456,"lh_m_iu_m_l" ] = NA
-data[data$patient_file_no == 456,"fsh_lh" ] = NA
+data[data$id == 456,"lh" ] = NA
+data[data$id == 456,"fsh_lh_ratio" ] = NA
 
 data = data %>% 
-  mutate(lh_m_iu_m_l = log10(lh_m_iu_m_l))
+  mutate(lh = log10(lh))
 
 data %>% 
-  ggplot(aes(x = "lh_m_iu_m_l", y = lh_m_iu_m_l)) +
+  ggplot(aes(x = "lh", y = lh)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 ```
@@ -196,24 +247,25 @@ data %>%
 #### FSH/LH ratio
 
 Since I have already removed outliers from the FSH and LH variables, the remaining outlier here should be biologically occurrent. Then, I will only log10-transform this variable. 
+
 ```{r}
 ## FSH/LH ratio
 data %>% 
-  ggplot(aes(x = "fsh_lh", y = fsh_lh)) +
+  ggplot(aes(x = "fsh_lh_ratio", y = fsh_lh_ratio)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 
 data %>% 
-  filter(fsh_lh > 250) %>% 
-  pull(patient_file_no)
+  filter(fsh_lh_ratio > 250) %>% 
+  pull(id)
 
 #I will flag this patient in case it pops out somewhere else in the analysis. 
 
 data = data %>% 
-  mutate(fsh_lh = log10(fsh_lh))
+  mutate(fsh_lh_ratio = log10(fsh_lh_ratio))
 
 data %>% 
-  ggplot(aes(x = "fsh_lh", y = fsh_lh)) +
+  ggplot(aes(x = "fsh_lh_ratio", y = fsh_lh_ratio)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 ```
@@ -223,23 +275,23 @@ data %>%
 According to [reference levels](https://americanpregnancy.org/getting-pregnant/hcg-levels/), the values present in our dataset are within the expected biological range. Then, I will just log-10 transform these variables.
 ```{r}
 data %>% 
-  select(c(patient_file_no, i_beta_hcg_m_iu_m_l,ii_beta_hcg_m_iu_m_l, pregnant_y_n)) %>% 
-  pivot_longer(- c(patient_file_no,pregnant_y_n ), names_to = "test", values_to = "data") %>% 
-  ggplot(aes(x = test, y = data, color = pregnant_y_n)) +
+  dplyr::select(c(id, i_betahcg, ii_betahcg, pregnant)) %>% 
+  pivot_longer(- c(id,pregnant), names_to = "test", values_to = "data") %>% 
+  ggplot(aes(x = test, y = data, color = pregnant)) +
   geom_jitter() 
 
 data = data %>% 
-  mutate(i_beta_hcg_m_iu_m_l = log10(i_beta_hcg_m_iu_m_l),
-         ii_beta_hcg_m_iu_m_l = log10(ii_beta_hcg_m_iu_m_l))
+  mutate(i_betahcg = log10(i_betahcg),
+         ii_betahcg = log10(ii_betahcg))
 
 #look at the data after transformation 
 data %>% 
-  select(c(patient_file_no, i_beta_hcg_m_iu_m_l,ii_beta_hcg_m_iu_m_l, pregnant_y_n)) %>% 
-  pivot_longer(- c(patient_file_no,pregnant_y_n ), names_to = "test", values_to = "data") %>% 
+  dplyr::select(c(id, i_betahcg,ii_betahcg, pregnant)) %>% 
+  pivot_longer(- c(id,pregnant), names_to = "test", values_to = "data") %>% 
   ggplot(aes(x = test, y = data)) +
   geom_jitter(alpha= 0.5) +
   geom_hline(yintercept = log10(5))+ 
-  facet_grid("pregnant_y_n")
+  facet_grid("pregnant")
 ```
 
 We can observe that even though both tests are supposed to measure the same hormone in blood, they do not provide similar results for many cases. Since the dataset does not provide more information about the tests, there is no way to know which one is more accurate, which would allow me to drop one of the variables. Also, it is weird that non-pregnant women are supposed to have a level of less than 5 mIU/mL. With the last plot, we can see that this is condition is not met; test 1 seems to have more false negatives, and test 2 seems to have more false positives. For now, I will keep both of these variables. 
@@ -250,15 +302,15 @@ According to [reference levels](https://www.urmc.rochester.edu/encyclopedia/cont
 
 ```{r}
 data %>% 
-  ggplot(aes(x = "prg_ng_m_l", y = prg_ng_m_l, color = pregnant_y_n)) +
+  ggplot(aes(x = "prg", y = prg, color = pregnant)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 
 data = data %>% 
-  mutate(prg_ng_m_l = log10(prg_ng_m_l)) 
+  mutate(prg = log10(prg)) 
 
 data %>% 
-  ggplot(aes(x = "prg_ng_m_l", y = prg_ng_m_l, color = pregnant_y_n)) +
+  ggplot(aes(x = "prg", y = prg, color = pregnant)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 ```
@@ -270,7 +322,7 @@ It has been reported that a normal range of vitamin D is 30 to 74 ng/mL, and tha
 
 ```{r}
 data %>% 
-  ggplot(aes(x = "vit_d3_ng_m_l", y = vit_d3_ng_m_l)) +
+  ggplot(aes(x = "vitd3", y = vitd3)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 ```
@@ -279,15 +331,15 @@ Therefore, I will remove those values.
 
 ```{r}
 data %>% 
-  filter(vit_d3_ng_m_l > 90) %>% 
-  pull(patient_file_no)
+  filter(vitd3 > 90) %>% 
+  pull(id)
 
-data[data$vit_d3_ng_m_l>90,"vit_d3_ng_m_l"] = NA
+data[data$vitd3>90,"vitd3"] = NA
 
 #Plot the data again
 
 data %>% 
-  ggplot(aes(x = "vit_d3_ng_m_l", y = vit_d3_ng_m_l)) +
+  ggplot(aes(x = "vitd3", y = vitd3)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 ```
@@ -296,19 +348,19 @@ data %>%
 It is reported that the normal pulse rate goes from [60 to 100 bpm](https://www.bhf.org.uk/informationsupport/heart-matters-magazine/medical/ask-the-experts/pulse-rate). Then, I will remove the observations that fall outside of that range
 ```{r}
 data %>% 
-  ggplot(aes(x = "pulse_rate_bpm", y = pulse_rate_bpm)) +
+  ggplot(aes(x = "pulse_rate", y = pulse_rate)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 
 data %>% 
-  filter(pulse_rate_bpm < 60) %>% 
-  pull(patient_file_no)
+  filter(pulse_rate < 60) %>% 
+  pull(id)
 
-data[data$pulse_rate_bpm < 60,"pulse_rate_bpm"] = NA
+data[data$pulse_rate < 60,"pulse_rate"] = NA
 
 #Re plot the data
 data %>% 
-  ggplot(aes(x = "pulse_rate_bpm", y = pulse_rate_bpm)) +
+  ggplot(aes(x = "pulse_rate", y = pulse_rate)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 ```
@@ -320,7 +372,7 @@ Now, I will look for outliers in the TSH hormone
 
 ```{r}
 data %>% 
-  ggplot(aes(x = "tsh_m_iu_l", y = tsh_m_iu_l)) +
+  ggplot(aes(x = "tsh", y = tsh)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 ```
@@ -329,19 +381,19 @@ There seems to be an outlier as well, since TSH levels in women with PCOS is aro
 
 ```{r}
 data %>% 
-  filter(tsh_m_iu_l > 40) %>% 
-  pull(patient_file_no)
+  filter(tsh > 40) %>% 
+  pull(id)
 #I will flag this patient in case it pops out somewhere else in the analysis. 
 
-data[data$tsh_m_iu_l  > 40,"tsh_m_iu_l" ] = NA
+data[data$tsh > 40,"tsh" ] = NA
 
 #Transform the variable
 data = data %>% 
-  mutate(tsh_m_iu_l = log10(tsh_m_iu_l))
+  mutate(tsh = log10(tsh))
 
 #Re plot the data
 data %>% 
-  ggplot(aes(x = "tsh_m_iu_l", y = tsh_m_iu_l)) +
+  ggplot(aes(x = "tsh", y = tsh)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 ```
@@ -350,28 +402,28 @@ data %>%
 Now, I will look for outliers in the AMH hormone
 ```{r}
 data %>% 
-  ggplot(aes(x = "amh_ng_m_l", y = amh_ng_m_l)) +
+  ggplot(aes(x = "amh", y = amh)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 
 data %>% 
-  filter(amh_ng_m_l > 40) %>% 
-  pull(patient_file_no)
+  filter(amh > 40) %>% 
+  pull(id)
 #I will flag this patient in case it pops out somewhere else in the analysis.
 ```
 
 I will remove the observation with AMH levels > 60 ng/mL since the reported values for women with PCOS have been reported to be around 4.32 ng/mL (2.633–7.777) in [previous studies](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5895547/).There are other values that seem to be too high, but I will only remove the outlier that is clearly separated from the rest of the observations. 
 
 ```{r}
-data[data$patient_file_no == 268,"amh_ng_m_l" ] = NA
+data[data$id == 268,"amh" ] = NA
 
 #Transform the variable
 data = data %>% 
-  mutate(amh_ng_m_l = log10(amh_ng_m_l))
+  mutate(amh = log10(amh))
 
 #Re plot the data
 data %>% 
-  ggplot(aes(x = "amh_ng_m_l", y = amh_ng_m_l)) +
+  ggplot(aes(x = "amh", y = amh)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 ```
@@ -380,12 +432,12 @@ data %>%
 Now, I will look for outliers in the blood presure. 
 ```{r}
 data %>% 
-  ggplot(aes(x = "bp_systolic_mm_hg", y = bp_systolic_mm_hg)) +
+  ggplot(aes(x = "bp_systolic", y = bp_systolic)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 
 data %>% 
-  ggplot(aes(x = "bp_diastolic_mm_hg", y = bp_diastolic_mm_hg)) +
+  ggplot(aes(x = "bp_diastolic", y = bp_diastolic)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 ```
@@ -394,20 +446,20 @@ We can observe that there are two different atypical patients with a very odd bl
 
 ```{r}
 data %>% 
-  filter(bp_diastolic_mm_hg < 50 |bp_systolic_mm_hg < 50) %>% 
-  pull(patient_file_no)
+  filter(bp_diastolic < 50 |bp_systolic < 50) %>% 
+  pull(id)
 #I will flag this patient in case it pops out somewhere else in the analysis.
-data[data$bp_diastolic_mm_hg  < 15,"bp_diastolic_mm_hg" ] = NA
-data[data$bp_systolic_mm_hg  < 15,"bp_systolic_mm_hg" ] = NA
+data[data$bp_diastolic < 15,"bp_diastolic" ] = NA
+data[data$bp_systolic < 15,"bp_systolic" ] = NA
 
 #Re plot the data
 data %>% 
-  ggplot(aes(x = "bp_systolic_mm_hg", y = bp_systolic_mm_hg)) +
+  ggplot(aes(x = "bp_systolic", y = bp_systolic)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 
 data %>% 
-  ggplot(aes(x = "bp_diastolic_mm_hg", y = bp_diastolic_mm_hg)) +
+  ggplot(aes(x = "bp_diastolic", y = bp_diastolic)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 
@@ -417,7 +469,7 @@ data %>%
 Now, I will look for outliers in the random blood sugar (glucose) test.
 ```{r}
 data %>% 
-  ggplot(aes(x = "rbs_mg_dl", y = rbs_mg_dl)) +
+  ggplot(aes(x = "rbs", y = rbs)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 ```
@@ -427,11 +479,11 @@ According to the [literature](https://www.mayoclinic.org/diseases-conditions/dia
 ```{r}
 #Transform the variable
 data = data %>% 
-  mutate(rbs_mg_dl = log10(rbs_mg_dl))
+  mutate(rbs = log10(rbs))
 
 #Re plot the data
 data %>% 
-  ggplot(aes(x = "rbs_mg_dl", y = rbs_mg_dl)) +
+  ggplot(aes(x = "rbs", y = rbs)) +
   geom_jitter(alpha = 0.5) +
   xlab("")
 ```
@@ -448,7 +500,7 @@ Now, I will explore the variability of the categorical variables.
 
 ```{r}
 plot_bar(data %>% 
-           select(-patient_file_no))
+           dplyr::select(-id))
 ```
 We can observe that none of the variables show an important lack of variation. Then, I won't remove any of them. 
 
@@ -457,7 +509,7 @@ Finally, I will explore the covariation of all of the variables in the dataset t
 
 ```{r,  fig.dim = c(8, 10)}
 plot_correlation(data %>% 
-                   select(-patient_file_no), 
+                   dplyr::select(-id), 
                  type = 'all',
                  cor_args = list("use" = "complete.obs"))
 ```

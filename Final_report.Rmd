@@ -10,8 +10,69 @@ output: pdf_document
 # Objectives
 
 # Methods 
-## 
 
+```{r}
+load("data.Rdata")
+
+#Drop variables not used for modeling
+data <- subset(data, select = -c(blood_group, 
+                                 pulse_rate_bpm, 
+                                 rr_breaths_min, 
+                                 hb_g_dl, 
+                                 marraige_status_yrs, 
+                                 pregnant_y_n, 
+                                 i_beta_hcg_m_iu_m_l, 
+                                 ii_beta_hcg_m_iu_m_l, 
+                                 tsh_m_iu_l)
+               )
+
+# Create dataset 1 using only variables obtained through through patient history
+data_set1 <- subset(data, select = c(patient_file_no,
+                                     pcos_y_n,
+                                     age_yrs,
+                                     cycle_r_i,
+                                     cycle_length_days,
+                                     no_of_aborptions,
+                                     weight_gain_y_n,
+                                     hair_growth_y_n,
+                                     skin_darkening_y_n,
+                                     hair_loss_y_n,
+                                     pimples_y_n,
+                                     fast_food_y_n,
+                                     reg_exercise_y_n)
+               )
+
+# Create dataset 2 using variables obtained through patient history and clinical examination
+data_set2 <- subset(data, select = c(patient_file_no,
+                                     weight_kg,
+                                     height_cm,
+                                     bmi,
+                                     hip_inch,
+                                     waist_inch,
+                                     waist_hip_ratio,
+                                     bp_systolic_mm_hg,
+                                     bp_diastolic_mm_hg)
+                    )
+
+data_set2 <- full_join(data_set1, data_set2, by = "patient_file_no")
+
+# Create dataset 3 using variables obtained through patient history, clinical examination and blood tests
+data_set3 <- subset(data, select = c(patient_file_no,
+                                     fsh_m_iu_m_l,
+                                     lh_m_iu_m_l,
+                                     fsh_lh,
+                                     amh_ng_m_l,
+                                     prl_ng_m_l,
+                                     vit_d3_ng_m_l,
+                                     prg_ng_m_l,
+                                     rbs_mg_dl)
+                    )
+
+data_set3 <- full_join(data_set2, data_set3, by = "patient_file_no")
+
+# Create dataset 4 using variables obtained through patient history, clinical examination, blood tests and ultrasound
+data_set4 <- data
+```
 
 # Results
 ## Exploratory Data Analysis
