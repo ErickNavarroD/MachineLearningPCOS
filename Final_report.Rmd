@@ -5,73 +5,106 @@ date: "2023-01-18"
 output: pdf_document
 ---
 
-# Introduction and background
+# 1 Introduction and background
+Polycystic ovary syndrome (PCOS). 
 
-# Objectives
+without external validation based on 
+variables 
+The project forms a part of the assessed portion of 
+the MEDI 504B course at the University of British Columbia for the authors of 
+this report.
 
-# Methods 
+# 2 Objectives
+This project aims to develop and validate a model to predict the need for 
+patients to undergo further testing based on their clinical history in order to 
+diagnose polycystic ovary syndrome (PCOS). 
+
+# 3 Methods 
 
 ```{r}
-load("data.Rdata")
-
 #Drop variables not used for modeling
 data <- subset(data, select = -c(blood_group, 
-                                 pulse_rate_bpm, 
-                                 rr_breaths_min, 
-                                 hb_g_dl, 
-                                 marraige_status_yrs, 
-                                 pregnant_y_n, 
-                                 i_beta_hcg_m_iu_m_l, 
-                                 ii_beta_hcg_m_iu_m_l, 
-                                 tsh_m_iu_l)
+                                 pulse_rate, 
+                                 rr, 
+                                 hb, 
+                                 marriage_status, 
+                                 pregnant, 
+                                 i_betahcg, 
+                                 ii_betahcg, 
+                                 tsh)
                )
 
 # Create dataset 1 using only variables obtained through through patient history
-data_set1 <- subset(data, select = c(patient_file_no,
-                                     pcos_y_n,
-                                     age_yrs,
-                                     cycle_r_i,
-                                     cycle_length_days,
-                                     no_of_aborptions,
-                                     weight_gain_y_n,
-                                     hair_growth_y_n,
-                                     skin_darkening_y_n,
-                                     hair_loss_y_n,
-                                     pimples_y_n,
-                                     fast_food_y_n,
-                                     reg_exercise_y_n)
+data_set1 <- subset(data, select = c(pcos,
+                                     age,
+                                     cycle,
+                                     cycle_length,
+                                     no_of_abortions,
+                                     weight_gain,
+                                     hair_growth,
+                                     skin_darkening,
+                                     hair_loss,
+                                     pimples,
+                                     fast_food,
+                                     reg_exercise)
                )
 
 # Create dataset 2 using variables obtained through patient history and clinical examination
-data_set2 <- subset(data, select = c(patient_file_no,
-                                     weight_kg,
-                                     height_cm,
+data_set2 <- subset(data, select = c(pcos,
+                                     age,
+                                     cycle,
+                                     cycle_length,
+                                     no_of_abortions,
+                                     weight_gain,
+                                     hair_growth,
+                                     skin_darkening,
+                                     hair_loss,
+                                     pimples,
+                                     fast_food,
+                                     reg_exercise,
+                                     weight,
+                                     height,
                                      bmi,
-                                     hip_inch,
-                                     waist_inch,
+                                     hip,
+                                     waist,
                                      waist_hip_ratio,
-                                     bp_systolic_mm_hg,
-                                     bp_diastolic_mm_hg)
+                                     bp_systolic,
+                                     bp_diastolic)
                     )
-
-data_set2 <- full_join(data_set1, data_set2, by = "patient_file_no")
 
 # Create dataset 3 using variables obtained through patient history, clinical examination and blood tests
-data_set3 <- subset(data, select = c(patient_file_no,
-                                     fsh_m_iu_m_l,
-                                     lh_m_iu_m_l,
-                                     fsh_lh,
-                                     amh_ng_m_l,
-                                     prl_ng_m_l,
-                                     vit_d3_ng_m_l,
-                                     prg_ng_m_l,
-                                     rbs_mg_dl)
+data_set3 <- subset(data, select = c(pcos,
+                                     age,
+                                     cycle,
+                                     cycle_length,
+                                     no_of_abortions,
+                                     weight_gain,
+                                     hair_growth,
+                                     skin_darkening,
+                                     hair_loss,
+                                     pimples,
+                                     fast_food,
+                                     reg_exercise,
+                                     weight,
+                                     height,
+                                     bmi,
+                                     hip,
+                                     waist,
+                                     waist_hip_ratio,
+                                     bp_systolic,
+                                     bp_diastolic,
+                                     fsh,
+                                     lh,
+                                     fsh_lh_ratio,
+                                     amh,
+                                     prl,
+                                     vitd3,
+                                     prg,
+                                     rbs)
                     )
 
-data_set3 <- full_join(data_set2, data_set3, by = "patient_file_no")
-
 # Create dataset 4 using variables obtained through patient history, clinical examination, blood tests and ultrasound
-data_set4 <- data
+data_set4 <- subset(data, select = -c(id))
 ```
 
 # Results
