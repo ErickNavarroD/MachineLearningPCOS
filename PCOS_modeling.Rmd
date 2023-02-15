@@ -8,11 +8,8 @@ output:
     toc_depth: 4
 ---
 
-## Introduction
-
-
 ## Setup
-
+### Load the data 
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(glmnet)
@@ -20,14 +17,23 @@ library(caret)
 library(here)
 
 #Make the code reproducible
-set.seed(123)
+set.seed(504)
 #load the data
 load(here("data.Rdata"))
 glimpse(data)
 
 ```
 
+### Data splitting 
+
+### Imputation on training set
+
+### Define the models
+
 Before doing the modeling, I will remove the variable "cycle_r_i", since I could find no information about what it is measuring neither in the documentation of the dataset nor online. Also, I will make the patient_file_no the rownames of the data set. 
+
+
+## Modeling
 
 ```{r}
 data = data %>% 
@@ -35,9 +41,8 @@ data = data %>%
   column_to_rownames("patient_file_no")
 ```
 
-## Data splitting
 
-### Complete cases
+
 ```{r}
 #Split the data into a training and a validation set
 data_complete_cases = data %>% 
@@ -61,9 +66,9 @@ table(data_complete_cases$pcos_y_n)[1]/ table(data_complete_cases$pcos_y_n)[2]
 ```
 
 
-## Logistic regression modeling
+### Logistic regression modeling
 
-### RIDGE regression
+### Elastic net regression
 
 For the RIDGE regression, I will start by finding the optimal lambda value using the function cv.glmnet(). I will do a 10-fold cross validation process to achieve this. 
 
@@ -92,10 +97,10 @@ coef(ridge.cv,s=ridge.cv$lambda.1se)
 ```
 
 
-### LASSO regression
+### Random Forest 
 
-### Elastic net regression 
+## Model comparison 
 
+*Select the best one at the end 
 
-## Trees modeling
-
+## Effect of class imbalance on the best model (if time allows)
