@@ -1,122 +1,31 @@
 ---
-title: "MEDI504B - Final project report"
-author: "Erick Navarro & Timo Totlppa"
+title: "Machine learning to predict polycystic ovary syndrome in South Asian women in primary care: Model development and validation"
+author: "Erick Navarro & Timo Tolppa"
 date: "2023-01-18"
 output: pdf_document
 ---
 
 # 1 Introduction and background
-Polycystic ovary syndrome (PCOS) is the most common endocrine disorder of women
-of reproductive age affecting between 5-18% of women.[1,2] This complex 
-multisystem disease is characterized by irregular menstrual periods, androgen 
-excess and enlarged polycystic ovaries, and is associated with infertility, 
-mental health disorders, obesity, dyslipidaemia, type 2 diabetes mellitus and a 
-higher risk of cardiovascular disease.[2-4] The disease has a substantial 
-negative effect on individuals' quality of life and health status, and thus 
-early diagnosis and effective specialist treatment is crucial.[1]
-  Diagnosis is confirmed by the presence of two of three criteria: irregular
-cycles, polycystic ovary morphology (identified with a transvaginal ultrasound),
-and hyperandrogenism (biochemical based on blood tests or clinical features such
-as acne, hair loss and excess hair growth).[2] However, the genetic and ethnic
+Polycystic ovary syndrome (PCOS) is the most common endocrine disorder of women of reproductive age affecting between 5-18% of women.[1,2] This complex multisystem disease is characterized by irregular menstrual periods, androgen excess and enlarged polycystic ovaries, and is associated with infertility, mental health disorders, obesity, dyslipidaemia, type 2 diabetes mellitus, low vitamin D3 levels and a higher risk of cardiovascular disease.[2-4] The disease has a substantial negative effect on individuals' quality of life and health status, and thus early diagnosis and effective specialist treatment is crucial.[1]
+  Diagnosis of PCOS is confirmed by the presence of two out of three criteria: irregular cycles, polycystic ovary morphology (identified with a transvaginal ultrasound), and hyperandrogenism (based on either blood tests or clinical history suggestive of acne, hair loss and excess hair growth).[2] These diagnostic criteria were established largely based on studies from White women and limited existing evidence suggests that clinical features vary between different ethnic groups.[1,3] For example, South Asian women with PCOS have been shown to have lower body mass index with increased central obesity and higher prominence of hirsutism than White women. Therefore, a greater understanding of clinical features that are important for a diagnosis of PCOS from a more diverse ethnic population is required.
+  Access to specialist care in many areas of the world, including the state of Kerala in India, is poor.[5] Therefore, primary care physicians have to accurately assess women based solely on their clinical history and refer women suspected of PCOS to specialist testing, which includes hormonal blood tests and transvaginal ultrasound at centers far away from their homes. Travel to specialist centers can also incur substantial costs for patients and their families, which may deter them from attending appointments.[5] To avoid unnecessary testing, referrals and cost, a diagnostic tool to help primary care physicians predict the need for further confirmatory testing for patients highly likely to have PCOS would be beneficial.[1] 
+  Machine learning models have been used to create diagnostic prediction tools in various disciplines.[6,7] These models are particularly helpful in diseases where uncertainty exists about the importance of symptoms and test results in the diagnosis, as is the case with PCOS. Previous machine learning studies in PCOS have identified laboratory results and gene biomarkers relevant to the diagnosis of PCOS, however, this information is often not available to primary care physicians deciding whether to refer women for further testing or not.[8-9]
 
+# 2 Objectives
+This project aims to develop and validate a machine learning model to help primary care physicians predict the need for South Asian patients to undergo further testing based on their clinical history in order to diagnose polycystic ovary syndrome. Prediction models developed using logistic regression, elastic net and random forest will be compared based on their ability to screen out true negative cases (i.e. specificity) to ensure all potential PCOS patients are referred for further testing. Prediction models based on patient history will also be compared to models developed using information obtained through clinical examination, blood tests and transvaginal ultrasound for overall accuracy (i.e. F1 and area under the curve) to understand the benefit of additional information for diagnostic prediction. Finally, variable importance in prediction models will be used to understand the most important predictive variables for PCOS in a South Asian population.
 
+# References
 [1] Joham AE, Norman RJ, Stener-Victorin E, et al. Polycystic ovary syndrome. Lancet Diabetes Endocrinol. 2022;10(9):668-680. doi:10.1016/S2213-8587(22)00163-2
 [2] Teede HJ, Misso ML, Costello MF, et al. Recommendations from the international evidence-based guideline for the assessment and management of polycystic ovary syndrome. Fertil Steril. 2018;110(3):364-379. doi:10.1016/j.fertnstert.2018.05.004
 [3] Sendur SN, Yildiz BO. Influence of ethnicity on different aspects of polycystic ovary syndrome: a systematic review. Reprod Biomed Online. 2021;42(4):799-818. doi:10.1016/j.rbmo.2020.12.006
 [4] Morgante G, Darino I, Spanò A, et al. PCOS Physiopathology and Vitamin D Deficiency: Biological Insights and Perspectives for Treatment. J Clin Med. 2022;11(15):4509. doi:10.3390/jcm11154509
-
-# 2 Objectives
-This project aims to develop and validate a model to predict the need for 
-patients to undergo further testing based on their clinical history in order to 
-diagnose polycystic ovary syndrome (PCOS). without external validation
+[5] Muraleedharan M and Chandak AO. Emerging challenges in the health systems of Kerala, India: qualitative analysis of literature reviews. J Health Res. 2022;36(2):242-54. doi:10.1108/JHR-04-2020-0091
+[6] Álvarez JD, Matias-Guiu JA, Cabrera-Martín MN, Risco-Martín JL, Ayala JL. An application of machine learning with feature selection to improve diagnosis and classification of neurodegenerative disorders. BMC Bioinformatics. 2019;20(1):491. doi:10.1186/s12859-019-3027-7
+[7] Vaid A, Somani S, Russak AJ, et al. Machine Learning to Predict Mortality and Critical Events in a Cohort of Patients With COVID-19 in New York City: Model Development and Validation. J Med Internet Res. 2020;22(11):e24018. doi:10.2196/24018
+[8] Xie NN, Wang FF, Zhou J, Liu C, Qu F. Establishment and Analysis of a Combined Diagnostic Model of Polycystic Ovary Syndrome with Random Forest and Artificial Neural Network. Biomed Res Int. 2020;2020:2613091. doi:10.1155/2020/2613091
+[9] Silva IS, Ferreira CN, Costa LBX, et al. Polycystic ovary syndrome: clinical and laboratory variables related to new phenotypes using machine-learning models. J Endocrinol Invest. 2022;45(3):497-505. doi:10.1007/s40618-021-01672-8
 
 # 3 Methods 
-
-```{r}
-#Drop variables not used for modeling
-data <- subset(data, select = -c(blood_group, 
-                                 pulse_rate, 
-                                 rr, 
-                                 hb, 
-                                 marriage_status, 
-                                 pregnant, 
-                                 i_betahcg, 
-                                 ii_betahcg, 
-                                 tsh)
-               )
-
-# Create dataset 1 using only variables obtained through through patient history
-data_set1 <- subset(data, select = c(pcos,
-                                     age,
-                                     cycle,
-                                     cycle_length,
-                                     no_of_abortions,
-                                     weight_gain,
-                                     hair_growth,
-                                     skin_darkening,
-                                     hair_loss,
-                                     pimples,
-                                     fast_food,
-                                     reg_exercise)
-               )
-
-# Create dataset 2 using variables obtained through patient history and clinical examination
-data_set2 <- subset(data, select = c(pcos,
-                                     age,
-                                     cycle,
-                                     cycle_length,
-                                     no_of_abortions,
-                                     weight_gain,
-                                     hair_growth,
-                                     skin_darkening,
-                                     hair_loss,
-                                     pimples,
-                                     fast_food,
-                                     reg_exercise,
-                                     weight,
-                                     height,
-                                     bmi,
-                                     hip,
-                                     waist,
-                                     waist_hip_ratio,
-                                     bp_systolic,
-                                     bp_diastolic)
-                    )
-
-# Create dataset 3 using variables obtained through patient history, clinical examination and blood tests
-data_set3 <- subset(data, select = c(pcos,
-                                     age,
-                                     cycle,
-                                     cycle_length,
-                                     no_of_abortions,
-                                     weight_gain,
-                                     hair_growth,
-                                     skin_darkening,
-                                     hair_loss,
-                                     pimples,
-                                     fast_food,
-                                     reg_exercise,
-                                     weight,
-                                     height,
-                                     bmi,
-                                     hip,
-                                     waist,
-                                     waist_hip_ratio,
-                                     bp_systolic,
-                                     bp_diastolic,
-                                     fsh,
-                                     lh,
-                                     fsh_lh_ratio,
-                                     amh,
-                                     prl,
-                                     vitd3,
-                                     prg,
-                                     rbs)
-                    )
-
-# Create dataset 4 using variables obtained through patient history, clinical examination, blood tests and ultrasound
-data_set4 <- subset(data, select = -c(id))
-```
 
 # Results
 ## Exploratory Data Analysis
@@ -261,3 +170,92 @@ This EDA was very helpful to familiarize myself with the data, clean it, and ide
 
 # Supplementary information
 ## Data dictionary 
+
+
+
+```{r}
+#Drop variables not used for modeling
+data <- subset(data, select = -c(blood_group, 
+                                 pulse_rate, 
+                                 rr, 
+                                 hb, 
+                                 marriage_status, 
+                                 pregnant, 
+                                 i_betahcg, 
+                                 ii_betahcg, 
+                                 tsh)
+               )
+
+# Create dataset 1 using only variables obtained through through patient history
+data_set1 <- subset(data, select = c(pcos,
+                                     age,
+                                     cycle,
+                                     cycle_length,
+                                     no_of_abortions,
+                                     weight_gain,
+                                     hair_growth,
+                                     skin_darkening,
+                                     hair_loss,
+                                     pimples,
+                                     fast_food,
+                                     reg_exercise)
+               )
+
+# Create dataset 2 using variables obtained through patient history and clinical examination
+data_set2 <- subset(data, select = c(pcos,
+                                     age,
+                                     cycle,
+                                     cycle_length,
+                                     no_of_abortions,
+                                     weight_gain,
+                                     hair_growth,
+                                     skin_darkening,
+                                     hair_loss,
+                                     pimples,
+                                     fast_food,
+                                     reg_exercise,
+                                     weight,
+                                     height,
+                                     bmi,
+                                     hip,
+                                     waist,
+                                     waist_hip_ratio,
+                                     bp_systolic,
+                                     bp_diastolic)
+                    )
+
+# Create dataset 3 using variables obtained through patient history, clinical examination and blood tests
+data_set3 <- subset(data, select = c(pcos,
+                                     age,
+                                     cycle,
+                                     cycle_length,
+                                     no_of_abortions,
+                                     weight_gain,
+                                     hair_growth,
+                                     skin_darkening,
+                                     hair_loss,
+                                     pimples,
+                                     fast_food,
+                                     reg_exercise,
+                                     weight,
+                                     height,
+                                     bmi,
+                                     hip,
+                                     waist,
+                                     waist_hip_ratio,
+                                     bp_systolic,
+                                     bp_diastolic,
+                                     fsh,
+                                     lh,
+                                     fsh_lh_ratio,
+                                     amh,
+                                     prl,
+                                     vitd3,
+                                     prg,
+                                     rbs)
+                    )
+
+# Create dataset 4 using variables obtained through patient history, clinical examination, blood tests and ultrasound
+data_set4 <- subset(data, select = -c(id))
+```
+
