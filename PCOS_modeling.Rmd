@@ -65,10 +65,20 @@ Following the data splitting, we will impute missing values. As we observed in t
 sapply(train, function(x) sum(is.na(x)))
 ```
 
+For imputation, we will use the [mice R package](https://cran.r-project.org/web/packages/mice/mice.pdf), a widely used software to handle missing data. We will use the default options, which use the most appropuate methodology depending on the class of the data to be imputed, which are the following: "By default, the method uses pmm, predictive mean matching (numeric data) logreg, logistic regression imputation (binary data, factor with 2 levels) polyreg, polytomous regression imputation for un- ordered categorical data (factor > 2 levels) polr, proportional odds model for (ordered, > 2 levels)."
+
 ```{r, message=FALSE}
 chained_train = mice::mice(train)
 
-#mice::densityplot(chained_train)
+#Explore the imputed data and check that the generated value are plausible 
+stripplot(chained_train, pulse_rate, pch = 19, xlab = "Imputation number")
+stripplot(chained_train, lh, pch = 19, xlab = "Imputation number")
+stripplot(chained_train, fsh_lh_ratio, pch = 19, xlab = "Imputation number")
+stripplot(chained_train, amh, pch = 19, xlab = "Imputation number")
+stripplot(chained_train, vitd3, pch = 19, xlab = "Imputation number")
+stripplot(chained_train, fast_food, pch = 19, xlab = "Imputation number")
+
+#It looks fine so we will proceed to extract the imputed data
 
 chained_train = complete(data=chained_train)
 
@@ -76,10 +86,32 @@ sapply(chained_train, function(x) sum(is.na(x)))
 ```
 
 
-
 ### Define the models
 
-Before doing the modeling, I will remove the variable "cycle_r_i", since I could find no information about what it is measuring neither in the documentation of the dataset nor online. Also, I will make the patient_file_no the rownames of the data set. 
+For the aim of this project, we will develop 4 different models with an increasing number of variables according to its easiness to collect. Then, model 1 will contain only variables that are collected throught the patient history, model 2 will have clinical examination ones added, model 3 blood tests and model 4 all the relevant variables available in the dataset. 
+
+It is worth mentioning that we removed some non-relevant variables from the datset based on the scientific literature of the field. A more detailed information about this selection can be found in the final report available in this repository. 
+
+```{r}
+# Create dataset 1 using only variables obtained through through patient history
+model1_vars = c("pcos","age","cycle","cycle_length",
+                 "no_of_abortions", "weight_gain", "hair_growth", "skin_darkening",
+                 "hair_loss","pimples","fast_food", "reg_exercise")
+
+# Create dataset 2 using variables obtained through patient history and clinical examination
+model2_vars  = c(model1_vars, "weight","height","bmi",
+                 "hip", "waist","waist_hip_ratio",
+                 "bp_systolic", "bp_diastolic")
+
+# Create dataset 3 using variables obtained through patient history, clinical examination and blood tests
+model3_vars = c(model2_vars, "fsh", "lh", "fsh_lh_ratio",
+              "amh", "prl", "vitd3", "prg", "rbs")
+
+# Create dataset 4 using variables obtained through patient history, clinical examination, blood tests and ultrasound
+model4_vars = c(model3_vars, "follicle_no_l", "follicle_no_r" ,
+              "avg_f_size_l", "avg_f_size_r", "endometrium")
+```
+
 
 ### Logistic regression modeling
 
