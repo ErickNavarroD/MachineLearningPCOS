@@ -1,6 +1,6 @@
 ---
 title: "PCOS modeling"
-author: "Erick Navarro"
+author: "Erick Navarro & Timo Tolppa"
 date: "2023-01-25"
 output: 
   pdf_document:
@@ -9,11 +9,12 @@ output:
 ---
 # Creating the classificators
 
-This report contains the details of the generation and comparison of several classificators whose aim is to classify people with and without Polycystic ovary syndrome (PCOS). The goal of this project is to develop and validate a model that takes easily collected variables, and test its performance against models that possess variables obtained with increasing invasive proceedures. For a summary of the results and a clearer picture of the project, please read the Final_report.pdf file in this repository. 
+This report contains the details of the generation and comparison of several classifiers whose aim is to classify people with and without polycystic ovary syndrome (PCOS). This report is part of a larger project with a goal to develop and validate a model that takes easily collected variables, and tests its performance against models using variables obtained with increasingly invasive procedures. For a summary of the results and a clearer picture of the project, please read the Final_report.pdf file in this repository. 
 
 ## Setup
 ### Load packages and data 
 ```{r setup, include=FALSE}
+# Load required libraries
 library(tidyverse)
 library(glmnet)
 library(caret)
@@ -21,76 +22,84 @@ library(here)
 library(mice)
 library(DataExplorer)
 
-#Make the code reproducible
+# Make the code reproducible
 set.seed(504)
-#load the data
+
+# Load the data
 load(here("data.Rdata"))
-# See how the data looks like
+
+# Overview of the data
 glimpse(data)
 ```
 
 ### Data splitting 
-
-After loading the data and packages, we will proceed to split the data into training and validation sets.
+After loading the data and packages, we will proceed to split the data into training and validation sets using a 70:30 random split.
 
 ```{r}
 data = data %>% 
   column_to_rownames("id")
 
+# Make the code reproducible
+set.seed(504)
+
+# Create the data split
 train.index <- caret::createDataPartition(data$pcos, p = .7, list=FALSE)
 
+# Define the training and validation data sets
 train <- data[ train.index,]
-valid  <- data[-train.index,]
+valid <- data[-train.index,]
 
-
-#Check the negative/positive ration in the validation set
+# Check the ratio of cases with and without the main outcome measure (i.e. PCOS diagnosis) in the training set
 table(train$pcos)
 table(train$pcos)[1]/ table(train$pcos)[2]
 
-#Check the negative/positive ration in the validation set
+# Check the ratio of cases with and without the main outcome measure (i.e. PCOS diagnosis) in the validation set
 table(valid$pcos)
 table(valid$pcos)[1]/ table(valid$pcos)[2]
 
-#Check the negative/positive ration in the original data set
+# Check the ratio of cases with and without the main outcome measure (i.e. PCOS diagnosis) in the original data set
+table(data$pcos)
 table(data$pcos)[1]/ table(data$pcos)[2]
-
 ```
+
+The ratio of cases with and without the main outcome measure (i.e. PCOS diagnosis) is similar between the original (2.0565), validation (2.0566) and training (2.0565) data.
 
 ### Imputation on training set
 
-Following the data splitting, we will impute missing values. As we observed in the EDA analysis, the proportion of missing data is overall very low, which makes all the variables with misingness suitable for imputation
+Following the data splitting, we will impute missing values for the training set. As observed in the exploratory data analysis, the proportion of missing data is very low overall, which makes variables with missingness suitable for imputation.
 
 ```{r}
 # Explore misingness in training set 
 sapply(train, function(x) sum(is.na(x)))
 ```
 
-For imputation, we will use the [mice R package](https://cran.r-project.org/web/packages/mice/mice.pdf), a widely used software to handle missing data. We will use the default options, which use the most appropuate methodology depending on the class of the data to be imputed, which are the following: "By default, the method uses pmm, predictive mean matching (numeric data) logreg, logistic regression imputation (binary data, factor with 2 levels) polyreg, polytomous regression imputation for un- ordered categorical data (factor > 2 levels) polr, proportional odds model for (ordered, > 2 levels)."
+For imputation, we will use the [mice R package](https://cran.r-project.org/web/packages/mice/mice.pdf), a widely used software to handle missing data. We will use the default options, which use the most appropiate methodology depending on the class of the data to be imputed, which are the following: "By default, the method uses pmm, predictive mean matching (numeric data) logreg, logistic regression imputation (binary data, factor with 2 levels) polyreg, polytomous regression imputation for un-ordered categorical data (factor > 2 levels) polr, proportional odds model for (ordered, > 2 levels)."
 
 ```{r, message=FALSE}
 chained_train = mice::mice(train)
 
-#Explore the imputed data and check that the generated value are plausible 
+# Explore the imputed data and check that the generated value are plausible 
 stripplot(chained_train, pulse_rate, pch = 19, xlab = "Imputation number")
 stripplot(chained_train, lh, pch = 19, xlab = "Imputation number")
 stripplot(chained_train, fsh_lh_ratio, pch = 19, xlab = "Imputation number")
 stripplot(chained_train, amh, pch = 19, xlab = "Imputation number")
 stripplot(chained_train, vitd3, pch = 19, xlab = "Imputation number")
 stripplot(chained_train, fast_food, pch = 19, xlab = "Imputation number")
+```
 
-#It looks fine so we will proceed to extract the imputed data
+The values appear to be plausible, therefore, we will proceed with extracting the imputed data
 
+```{r}
 chained_train = complete(data=chained_train)
-
 sapply(chained_train, function(x) sum(is.na(x)))
 ```
 
 
 ### Define the models
 
-For the aim of this project, we will develop 4 different models with an increasing number of variables according to its easiness to collect. Then, model 1 will contain only variables that are collected throught the patient history, model 2 will have clinical examination ones added, model 3 blood tests and model 4 all the relevant variables available in the dataset. 
+For the aim of this project, we will develop 4 different models with an increasing number of variables according to how easy they are to collect. Model 1 will contain only variables that are collected through patient history, model 2 will add variables collected through clinical examination, model 3 adds results of blood tests and model 4 will include all the relevant variables available in the data, including results from the transvaginal ultrasound. 
 
-It is worth mentioning that we removed some non-relevant variables from the datset based on the scientific literature of the field. A more detailed information about this selection can be found in the final report available in this repository. 
+It is worth mentioning that we removed some non-relevant variables from the dataset based on the scientific literature of the field. A more detailed information about this selection can be found in the final report available in this repository. 
 
 ```{r}
 # Create dataset 1 using only variables obtained through through patient history
@@ -113,28 +122,32 @@ model4_vars = c(model3_vars, "follicle_no_l", "follicle_no_r" ,
 
 ```
 
-
-### Logistic regression modeling
+### Define cross-validation parameters
 
 ```{r}
-
+# Set the cross-validation parameters for all models
 fitControl <- trainControl(
     method = 'cv',
     number = 5,
     savePredictions = 'final',
     classProbs = TRUE,
     summaryFunction=twoClassSummary)
+```
 
+### Logistic regression modeling
+
+```{r}
+# Set the seed to ensure reproducibility
 set.seed(504)
-#Since we have few samples, I will use bootstrapping instead of cross fold validation
 
+#Since we have few samples, we will use bootstrapping instead of cross fold validation
 models_logreg = list()
 
 for (model in list(model1_vars, model2_vars, model3_vars, model4_vars)){
   cv_model = caret::train(
     pcos ~ ., 
     data = chained_train %>% 
-      select(all_of(model)), 
+      dplyr::select(all_of(model)), 
     method = "glm",
     family = "binomial",
     trControl = fitControl)
@@ -158,7 +171,7 @@ for (model in list(model1_vars, model2_vars, model3_vars, model4_vars)){
     pcos ~ ., 
     trControl = fitControl,
     data = chained_train %>% 
-      select(all_of(model)), 
+      dplyr::select(all_of(model)), 
     method = "glmnet",
     tuneGrid = expand.grid(alpha = seq(0.1,.2,by = 0.05),  
                            lambda = seq(0.05,0.3,by = 0.05)),
@@ -182,6 +195,30 @@ plot(models_EN[[4]])
 ```
 
 ### Random Forest 
+
+```{r}
+# Set the seed to ensure reproducibility
+set.seed(504)
+
+# Train the random forest model for all four sets of data
+models_rf = list()
+
+for (model in list(model1_vars, model2_vars, model3_vars, model4_vars)){
+  rf_model = caret::train(
+    pcos ~ ., 
+    data = chained_train %>% 
+      dplyr::select(all_of(model)),
+    method = "ranger",
+    tuneLength = 5,
+    metric = "ROC",
+    trControl = fitControl,
+    importance="impurity")
+  models_rf = append(models_rf, list(rf_model))
+}
+
+names(models_rf) = c("model1","model2", "model3", "model4")
+models_rf
+```
 
 ## Model comparison 
 Predict on the validation data set and get statistics in a table
