@@ -143,6 +143,7 @@ for (model in list(model1_vars, model2_vars, model3_vars, model4_vars)){
 
 names(models_logreg) = c("model1","model2", "model3", "model4")
 
+models_logreg
 ```
 
 
@@ -166,17 +167,25 @@ for (model in list(model1_vars, model2_vars, model3_vars, model4_vars)){
   models_EN = append(models_EN, list(en_model))
 }
 
+names(models_EN) = c("model1","model2", "model3", "model4")
 models_EN
+
+#Plot parameter tuning of model 1
+plot(models_EN[[1]])
+#Plot parameter tuning of model 2
+plot(models_EN[[2]])
+#Plot parameter tuning of model 3
+plot(models_EN[[3]])
+#Plot parameter tuning of model 4
+plot(models_EN[[4]])
+
 ```
-
-
-
-
-
 
 ### Random Forest 
 
 ## Model comparison 
+Predict on the validation data set and get statistics in a table
+
 
 *Select the best one at the end 
 
