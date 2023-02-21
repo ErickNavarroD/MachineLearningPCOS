@@ -221,6 +221,8 @@ names(models_rf) = c("model1","model2", "model3", "model4")
 models_rf
 ```
 
+Note on parameter tuning: The number of trees was kept at the default of 500, as increases in the number of trees to 1000, 5000 and 10000 only improved model performance by less than 1% for ROC, sensitivity and specificity. However, the processing time was increased significantly. 
+
 #### Random Forest: Variable Importance by Data Set
 
 ```{r}
