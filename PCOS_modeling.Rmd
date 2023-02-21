@@ -110,38 +110,68 @@ model3_vars = c(model2_vars, "fsh", "lh", "fsh_lh_ratio",
 # Create dataset 4 using variables obtained through patient history, clinical examination, blood tests and ultrasound
 model4_vars = c(model3_vars, "follicle_no_l", "follicle_no_r" ,
               "avg_f_size_l", "avg_f_size_r", "endometrium")
+
 ```
 
 
 ### Logistic regression modeling
 
+```{r}
+
+fitControl <- trainControl(
+    method = 'cv',
+    number = 5,
+    savePredictions = 'final',
+    classProbs = TRUE,
+    summaryFunction=twoClassSummary)
+
+set.seed(504)
+#Since we have few samples, I will use bootstrapping instead of cross fold validation
+
+models_logreg = list()
+
+for (model in list(model1_vars, model2_vars, model3_vars, model4_vars)){
+  cv_model = caret::train(
+    pcos ~ ., 
+    data = chained_train %>% 
+      select(all_of(model)), 
+    method = "glm",
+    family = "binomial",
+    trControl = fitControl)
+  models_logreg = append(models_logreg, list(cv_model))
+}
+
+names(models_logreg) = c("model1","model2", "model3", "model4")
+
+```
+
+
 ### Elastic net regression
 
-For the RIDGE regression, I will start by finding the optimal lambda value using the function cv.glmnet(). I will do a 10-fold cross validation process to achieve this. 
-
 ```{r}
-#convert training data to matrix format
-x_matrix <- model.matrix(pcos_y_n~.,train)
 
-#convert class to numerical variable
-response <- ifelse(train$pcos_y_n=="1",1,0)
+models_EN = list()
 
-#perform grid search to find optimal value of lambda
-ridge.cv <- cv.glmnet(x_matrix,response,alpha=0,
-                      nfolds = 10,
-                      family="binomial",type.measure = "class" )
-#plot result
-plot(ridge.cv)
+for (model in list(model1_vars, model2_vars, model3_vars, model4_vars)){
+  en_model = caret::train(
+    pcos ~ ., 
+    trControl = fitControl,
+    data = chained_train %>% 
+      select(all_of(model)), 
+    method = "glmnet",
+    tuneGrid = expand.grid(alpha = seq(0.1,.2,by = 0.05),  
+                           lambda = seq(0.05,0.3,by = 0.05)),
+    verbose = FALSE,
+    metric="ROC")
+  models_EN = append(models_EN, list(en_model))
+}
+
+models_EN
 ```
 
-After doing this search, I will use the lambda that gives the simplest model but also lies within one standard error of the optimal value of lambda for the rest of my analysis. 
 
-```{r}
-#Check the lambda that I will use
-ridge.cv$lambda.1se
 
-coef(ridge.cv,s=ridge.cv$lambda.1se)
-```
+
 
 
 ### Random Forest 
