@@ -134,6 +134,8 @@ fitControl <- trainControl(
     summaryFunction=twoClassSummary)
 ```
 
+## Model creation
+
 ### Logistic regression modeling
 
 ```{r}
@@ -158,7 +160,6 @@ names(models_logreg) = c("model1","model2", "model3", "model4")
 
 models_logreg
 ```
-
 
 ### Elastic net regression
 
@@ -218,6 +219,23 @@ for (model in list(model1_vars, model2_vars, model3_vars, model4_vars)){
 
 names(models_rf) = c("model1","model2", "model3", "model4")
 models_rf
+```
+
+#### Random Forest: Variable Importance by Data Set
+
+```{r}
+# Load required libraries
+library(ggplot2)
+library(cowplot)
+
+# Create variable importance graphs for each data set
+vip_rf_model1 <- vip::vip(models_rf[[1]])
+vip_rf_model2 <- vip::vip(models_rf[[2]])
+vip_rf_model3 <- vip::vip(models_rf[[3]])
+vip_rf_model4 <- vip::vip(models_rf[[4]])
+
+#Create a combined graph for all variable importance graphs
+plot_grid(vip_rf_model1, vip_rf_model2, vip_rf_model3, vip_rf_model4, labels = c('Model 1', 'Model 2', 'Model 3', 'Model 4'), label_size = 10, vjust = 1, scale = 0.95)
 ```
 
 ## Model comparison 
