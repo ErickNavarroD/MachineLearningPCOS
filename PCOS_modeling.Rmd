@@ -21,6 +21,9 @@ library(caret)
 library(here)
 library(mice)
 library(DataExplorer)
+library(cowplot)
+library(vip)
+library(pROC)
 
 # Make the code reproducible
 set.seed(504)
@@ -134,9 +137,11 @@ fitControl <- trainControl(
     summaryFunction=twoClassSummary)
 ```
 
-## Model creation
+## Modeling
 
 ### Logistic regression modeling
+
+First, we will fit a logistic regression model with the features mentioned above.
 
 ```{r}
 # Set the seed to ensure reproducibility
@@ -162,6 +167,8 @@ models_logreg
 ```
 
 ### Elastic net regression
+
+We will also fit an elastic net model, which is a method that performs feature selection and remove redundant terms in the models. 
 
 ```{r}
 
@@ -197,6 +204,8 @@ plot(models_EN[[4]])
 
 ### Random Forest 
 
+Finally, we will fit a model of the CART family. 
+
 ```{r}
 # Set the seed to ensure reproducibility
 set.seed(504)
@@ -227,9 +236,6 @@ The number of trees was kept at the default of 500, as increases in the number o
 #### Random Forest: Variable Importance by Data Set
 
 ```{r}
-# Load required libraries
-library(ggplot2)
-library(cowplot)
 
 # Create variable importance graphs for each data set
 vip_rf_model1 <- vip::vip(models_rf[[1]])
@@ -242,7 +248,60 @@ plot_grid(vip_rf_model1, vip_rf_model2, vip_rf_model3, vip_rf_model4, labels = c
 ```
 
 ## Model comparison 
-Predict on the validation data set and get statistics in a table
+## Test the performance in the validation set
+
+For this step, we will first fit the models in the validation data set to get the performance metrics. 
+
+We will concatenate all the models and estimate their performance in the validation set. 
+```{r}
+#Get the outcomes in the validation set.
+outcomes = list(valid %>% 
+                  dplyr::select(all_of(model1_vars)) %>% 
+                  drop_na() %>% 
+                  pull(pcos), 
+                valid %>% 
+                  dplyr::select(all_of(model2_vars)) %>% 
+                  drop_na() %>% 
+                  pull(pcos),
+                valid %>% 
+                  dplyr::select(all_of(model3_vars)) %>% 
+                  drop_na() %>% 
+                  pull(pcos),
+                valid %>% 
+                  dplyr::select(all_of(model4_vars)) %>% 
+                  drop_na() %>% 
+                  pull(pcos))
+
+models_aggregated = c(models_logreg, models_EN, models_rf)
+
+#Generate prediction metrics
+pred_models = models_aggregated %>% 
+  purrr::map(\(x) predict(object = x, newdata = valid, type = "raw")) %>% 
+  purrr::map2(c(rep(outcomes,3)), \(x,y) caret::confusionMatrix(x,y)) 
+
+#Create data frame with the metrics
+(metrics = tibble(Method = c(rep("LR",4),
+                            rep("EN",4),
+                            rep("RF",4)),
+                 Model = c(rep(c("1", "2","3", "4"), 3)),
+                 Specificity = map(pred_models, "byClass") %>% 
+                   map_dbl("Specificity"),
+                 Sensitivity = map(pred_models, "byClass") %>% 
+                   map_dbl("Sensitivity"),
+                 F1 = map(pred_models, "byClass") %>% 
+                   map_dbl("F1")
+                 ))
+
+```
+
+
+
+```{r}
+
+
+
+```
+
 
 
 *Select the best one at the end 
