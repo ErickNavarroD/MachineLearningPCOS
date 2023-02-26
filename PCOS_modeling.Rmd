@@ -80,7 +80,7 @@ sapply(train, function(x) sum(is.na(x)))
 
 For imputation, we will use the [mice R package](https://cran.r-project.org/web/packages/mice/mice.pdf), a widely used software to handle missing data. We will use the default options, which use the most appropiate methodology depending on the class of the data to be imputed, which are the following: "By default, the method uses pmm, predictive mean matching (numeric data) logreg, logistic regression imputation (binary data, factor with 2 levels) polyreg, polytomous regression imputation for un-ordered categorical data (factor > 2 levels) polr, proportional odds model for (ordered, > 2 levels)."
 
-```{r, message=FALSE}
+```{r, message=FALSE, warning=FALSE}
 chained_train = mice::mice(train)
 
 # Explore the imputed data and check that the generated value are plausible 
@@ -145,7 +145,7 @@ fitControl <- trainControl(
 
 First, we will fit a logistic regression model with the features mentioned above.
 
-```{r}
+```{r, warning=FALSE}
 # Set the seed to ensure reproducibility
 set.seed(504)
 
@@ -241,7 +241,7 @@ The number of trees was kept at the default of 500, as increases in the number o
 For this step, we will first fit the models in the validation data set to get the performance metrics. 
 
 We will concatenate all the models and estimate their performance in the validation set. 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 #Get the outcomes in the validation set.
 outcomes = list(valid %>% 
                   dplyr::select(all_of(model1_vars)) %>% 
@@ -321,6 +321,7 @@ plot_grid(vip::vip(models_EN[[1]]),
 As a post hoc analysis, we wanted to explore how the model would've performed if we had used only complete cases and hadn't had performed any imputation. 
 
 ```{r}
+set.seed(504)
 train_complete = train %>% 
   drop_na()
 
@@ -359,4 +360,48 @@ comparison_complete %>%
 ```
 
 
+### Class imbalance
+
+Finally, we will exlpore the effect of correcting for class imbalance in our dataset in the elastic net model 1. 
+```{r}
+fitControl$sampling <- "down"
+
+down_fit <- train(pcos ~ .,
+                  data = chained_train %>% 
+                    select(all_of(model1_vars)),
+                  method = "glmnet",
+                  tuneGrid = expand.grid(alpha = seq(0.1,.2,by = 0.05),  
+                                         lambda = seq(0.05,0.3,by = 0.05)),
+                  verbose = FALSE,
+                  metric="ROC",
+                  trControl = fitControl)
+
+pred_en1_down = predict(object = down_fit, newdata = valid, type = "raw") %>% 
+  confusionMatrix(outcomes[[1]])
+
+AUC_down = predict(object = down_fit, newdata = valid, type = "prob")
+AUC_down = pROC::auc(outcomes[[1]], AUC_down$Yes) 
+
+(comparison_down = metrics %>% 
+  unite(Name, Method, Model, sep = "") %>% 
+  filter(Name == "EN1") %>% 
+  bind_rows(tibble(Name = "EN1_down",
+                       Specificity = pred_en1_down$byClass["Specificity"],
+                       Sensitivity = pred_en1_down$byClass["Sensitivity"],
+                       F1 = pred_en1_down$byClass["F1"],
+                       AUC = as.numeric(AUC_down))))
+
+comparison_down %>% 
+  flextable::flextable() %>% 
+  flextable::colformat_double(digits = 3)
+
+```
+
+As we can observe, the model without the class imbalance correction has a higher sensitivity, and F1 score, which are metrics that we chose to maximize because of the aim of our study. Therefore, we will keep the EN model 1 as the proposed model of our study
+
+## R sesion
+
+```{r}
+sessionInfo()
+```
 
