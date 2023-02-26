@@ -7,9 +7,9 @@ The goal of this project is to develop and validate a predictive diagnostic mode
 If you want to learn more about our work, please check the Final Report pdf in this repository. 
 
 ## Structure 
-- Analysis/ Folder containing the R code that was used for the project. Two main Rmd files are present here: one for the Ecploratory Data Analysis (EDA), and another one for the creation and comparison of models (PCOS_modeling)
-- Data/ Folder containing the original data in an excel file and the cleaned data that we used for the project. 
-- Final_report.pdf File containing the report of the project with a broader description of our goals, the interpretation of our results, and their discussion. 
+- `Analysis/` Folder containing the R code that was used for the project. Two main Rmd files are present here: one for the Ecploratory Data Analysis (EDA), and another one for the creation and comparison of models (PCOS_modeling)
+- `Data/` Folder containing the original data in an excel file and the cleaned data that we used for the project. 
+- `Final_report.pdf` File containing the report of the project with a broader description of our goals, the interpretation of our results, and their discussion. 
 
 ## Authoring
 This work was done by Erick Navarro and Timo Tolppa. 
