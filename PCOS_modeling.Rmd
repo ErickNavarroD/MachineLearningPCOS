@@ -266,6 +266,10 @@ pred_models = models_aggregated %>%
   purrr::map(\(x) predict(object = x, newdata = valid, type = "raw")) %>% 
   purrr::map2(c(rep(outcomes,3)), \(x,y) caret::confusionMatrix(x,y)) 
 
+AUC = models_aggregated %>% 
+  purrr::map(\(x) predict(object = x, newdata = valid, type = "prob")) %>% 
+  purrr::map2(c(rep(outcomes,3)), \(x,y) pROC::auc(y, x$Yes)) 
+
 #Create data frame with the metrics
 (metrics = tibble(Method = c(rep("LR",4),
                             rep("EN",4),
@@ -276,21 +280,20 @@ pred_models = models_aggregated %>%
                  Sensitivity = map(pred_models, "byClass") %>% 
                    map_dbl("Sensitivity"),
                  F1 = map(pred_models, "byClass") %>% 
-                   map_dbl("F1")
+                   map_dbl("F1"),
+                 AUC = unlist(AUC)
                  ))
 
 pheatmap(metrics %>% 
            unite(name, Method, Model, sep = "") %>% 
            column_to_rownames(var= "name") %>% 
-           select(c(Sensitivity, Specificity, F1)),
+           select(c(Sensitivity, Specificity, F1, AUC)),
          cluster_rows = F,
          cluster_cols = F, 
          scale = "column",
          display_numbers = round(metrics %>% 
-           select(c(Sensitivity, Specificity, F1)),2)
+           select(c(Sensitivity, Specificity, F1, AUC)),2)
          )
-
-
 ```
 
 
