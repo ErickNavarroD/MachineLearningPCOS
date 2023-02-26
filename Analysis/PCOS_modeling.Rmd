@@ -31,7 +31,7 @@ library(flextable)
 set.seed(504)
 
 # Load the data
-load(here("data.Rdata"))
+load(here("Data/data.Rdata"))
 
 # Overview of the data
 glimpse(data)
