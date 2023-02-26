@@ -6,6 +6,7 @@ output:
   pdf_document:
     toc: true
     toc_depth: 4
+    latex_engine: xelatex
 ---
 
 ## 1 Introduction 
@@ -569,12 +570,12 @@ The correlation plot reveals some variables that are directly correlated with ou
   Some other interesting correlations can be gleamed from this plot. Namely that fast food is correlated with weight gain, hair growth, hair loss, pimples, skin darkening and follicle numbers in both ovaries, all of which are also correlated with a diagnosis of PCOS. This is an unexpected and interesting finding, and raises questions about the relationship between PCOS and the consumption of fast food. 
   Finally, some expected correlations are noted. Pregnancy is strongly correlated with beta-HCG values, which are normally elevated in pregnancy. Hip and waist circumferences, which are measures used to denote central obesity, are correlated with weight and body mass index. Weight gain is similarly correlated with hip and waist circumference, weight and body mass index.
 
-```{r,  fig.dim = c(10, 16)}
+```{r,  fig.dim = c(8, 6)}
 # Correlation plot for all variables that have a correlation of >0.35 with the outcome of interest
 
 figure5.1 <- plot_correlation(data %>% na.omit(data) %>% dplyr::select(pcos, cycle, fast_food, weight_gain, hair_growth, skin_darkening, follicle_no_l, follicle_no_r), 
                               type = 'all',
-                              theme_config = theme(legend.position = "right", axis.text = element_text(size=12), axis.text.x = element_text(angle=90)),
+                              theme_config = theme(legend.position = "right", axis.text = element_text(size=10), axis.text.x = element_text(angle=90)),
                               cor_args = list("use" = "complete.obs"))
 ```
   
@@ -597,7 +598,7 @@ library(gmodels)
 table6.1.1 <- CrossTable(data$pregnant, data$pcos, prop.t=FALSE, prop.r=FALSE, prop.c=TRUE, expected = FALSE, prop.chisq=FALSE, chisq = TRUE, dnn=c("Pregnant","PCOS Diagnosis"))
 ```
 
-There is no statistically significant difference between patients with and without PCOS with regards to pregnancy status (χ(1) = 0.411, p = 0.521). This further supports the decision to not use this variable in the predictive models.
+There is no statistically significant difference between patients with and without PCOS with regards to pregnancy status (p = 0.521). This further supports the decision to not use this variable in the predictive models.
 
 #### 6.1.2 beta-HCG levels
 
@@ -813,6 +814,7 @@ Finally, I will save the object for future stages of this project.
 
 ```{r}
 save(data,file =  here("data.Rdata"))
+skim(data)
 ```
 
 ## Conclusion
