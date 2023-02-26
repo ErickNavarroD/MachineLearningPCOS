@@ -1,4 +1,4 @@
-# Development of a predictive Machine Learning model for PCOS
+# Development of a predictive Machine Learning model for PCOS screening
 
 Welcome to the repository of our final project for the MEDI504B course at the University of British Columbia! 
 
