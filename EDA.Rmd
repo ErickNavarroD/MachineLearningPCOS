@@ -1,6 +1,6 @@
 ---
 title: "MEDI 504B - Exploratory Data Analysis"
-author: "Erick Navarro"
+author: "Erick Navarro & Timo Tolppa"
 date: "2023-01-11"
 output: 
   pdf_document:
@@ -28,6 +28,7 @@ library(janitor)
 library(DataExplorer)
 library(knitr)
 library(skimr)
+library(cowplot)
 
 # Load the data file to a data frame
 data = read_excel(here("PCOS_data_without_infertility.xlsx"), sheet = "Full_new") %>% 
