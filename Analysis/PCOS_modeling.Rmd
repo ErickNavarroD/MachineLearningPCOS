@@ -325,8 +325,6 @@ set.seed(504)
 train_complete = train %>% 
   drop_na()
 
-models_EN = list()
-
 en_model1_complete = caret::train(
     pcos ~ ., 
     trControl = fitControl,
@@ -395,9 +393,31 @@ comparison_down %>%
   flextable::flextable() %>% 
   flextable::colformat_double(digits = 3)
 
+comparison_complete %>% 
+  bind_rows(tibble(Name = "EN1_down",
+                       Specificity = pred_en1_down$byClass["Specificity"],
+                       Sensitivity = pred_en1_down$byClass["Sensitivity"],
+                       F1 = pred_en1_down$byClass["F1"],
+                       AUC = as.numeric(AUC_down))) %>% 
+  flextable::flextable() %>% 
+  flextable::colformat_double(digits = 3)
+  
+
 ```
 
 As we can observe, the model without the class imbalance correction has a higher sensitivity, and F1 score, which are metrics that we chose to maximize because of the aim of our study. Therefore, we will keep the EN model 1 as the proposed model of our study
+
+Finally, we will get the coefficients of the model.
+
+```{r}
+coef(models_EN[[1]]$finalModel, models_EN[[1]]$bestTune$lambda) %>% 
+  as.matrix() %>% 
+  data.frame() %>% 
+  rownames_to_column(var = "Variable") %>% 
+  rename("Coeficient" = "s1") %>% 
+  flextable() %>% 
+  colformat_double(digits = 3)
+```
 
 ## R sesion
 
