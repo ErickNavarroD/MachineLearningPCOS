@@ -1,0 +1,12 @@
+"0","data %>% 
+  filter(bp_diastolic < 50 |bp_systolic < 50) %>% 
+  pull(id)
+"
+"1","[1]"
+"1"," ""162"""
+"1"," ""201"""
+"1","
+"
+"0","#I will flag this patient in case it pops out somewhere else in the analysis."
+"0","data[data$bp_diastolic < 15,""bp_diastolic"" ] = NA"
+"0","data[data$bp_systolic < 15,""bp_systolic"" ] = NA"

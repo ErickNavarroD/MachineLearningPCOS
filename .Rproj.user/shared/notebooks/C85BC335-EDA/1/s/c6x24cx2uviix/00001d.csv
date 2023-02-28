@@ -1,0 +1,6 @@
+"0","data %>% "
+"0","  filter(is.na(fast_food) | "
+"0","           is.na(marriage_status) |"
+"0","           is.na(amh)) %>% "
+"0","  dplyr::select(c(id, fast_food, marriage_status, amh)) %>% "
+"0","  knitr::kable()"

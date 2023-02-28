@@ -1,0 +1,6 @@
+"0","# Correlation plot for all variables that have a correlation of >0.35 with the outcome of interest"
+"0",""
+"0","figure5.1 <- plot_correlation(data %>% na.omit(data) %>% dplyr::select(pcos, cycle, fast_food, weight_gain, hair_growth, skin_darkening, follicle_no_l, follicle_no_r), "
+"0","                              type = 'all',"
+"0","                              theme_config = theme(legend.position = ""right"", axis.text = element_text(size=10), axis.text.x = element_text(angle=90)),"
+"0","                              cor_args = list(""use"" = ""complete.obs""))"

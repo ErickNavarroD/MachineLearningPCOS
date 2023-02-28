@@ -1,0 +1,5 @@
+"0","data %>% "
+"0","  dplyr::select(c(id, i_betahcg, ii_betahcg, pregnant)) %>% "
+"0","  pivot_longer(- c(id,pregnant), names_to = ""test"", values_to = ""data"") %>% "
+"0","  ggplot(aes(x = test, y = data, color = pregnant)) +"
+"0","  geom_jitter() "

@@ -1,0 +1,6 @@
+"0",""
+"0","# Plot to identify outliers for waist circumference"
+"0","data %>% "
+"0","  ggplot(aes(x = ""waist"", y = waist)) +"
+"0","  geom_jitter(alpha = 0.5) +"
+"0","  xlab("""")"

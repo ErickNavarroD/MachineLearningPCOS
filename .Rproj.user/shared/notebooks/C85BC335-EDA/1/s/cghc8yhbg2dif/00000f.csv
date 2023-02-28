@@ -1,0 +1,7 @@
+"0","data = data %>% "
+"0","  mutate(fsh_m_iu_m_l = log10(fsh_m_iu_m_l))"
+"0",""
+"0","data %>% "
+"0","  ggplot(aes(x = ""fsh_m_iu_m_l"", y = fsh_m_iu_m_l)) +"
+"0","  geom_jitter(alpha = 0.5) +"
+"0","  xlab("""")"

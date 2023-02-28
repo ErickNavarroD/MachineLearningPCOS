@@ -1,0 +1,4 @@
+"0","data %>% "
+"0","  ggplot(aes(x = ""tsh_m_iu_l"", y = tsh_m_iu_l)) +"
+"0","  geom_jitter(alpha = 0.5) +"
+"0","  xlab("""")"

@@ -1,0 +1,13 @@
+"0","data %>% 
+  ggplot(aes(x = ""bp_systolic"", y = bp_systolic)) +
+  geom_jitter(alpha = 0.5) +
+  xlab("""")
+
+data %>% 
+  ggplot(aes(x = ""bp_diastolic"", y = bp_diastolic)) +
+  geom_jitter(alpha = 0.5) +
+  xlab("""")
+"
+"0","```"
+"2","Error: attempt to use zero-length variable name
+"

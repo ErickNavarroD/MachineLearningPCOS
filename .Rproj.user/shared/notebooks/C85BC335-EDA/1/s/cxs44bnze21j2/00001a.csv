@@ -1,0 +1,6 @@
+"0",""
+"0","# Plot to identify outliers for hemoglobin (hb)"
+"0","data %>% "
+"0","  ggplot(aes(x = ""hb"", y = hb)) +"
+"0","  geom_jitter(alpha = 0.5) +"
+"0","  xlab("""")"

@@ -1,0 +1,2 @@
+"0","data[data$id == 330,""fsh"" ] = NA"
+"0","data[data$id == 330,""fsh_lh_ratio"" ] = NA"

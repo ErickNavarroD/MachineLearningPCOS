@@ -1,0 +1,4 @@
+"0","data %>% "
+"0","  ggplot(aes(x = ""vitd3"", y = vitd3)) +"
+"0","  geom_jitter(alpha = 0.5) +"
+"0","  xlab("""")"
