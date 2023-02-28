@@ -1,0 +1,41 @@
+---
+title: "Modelling"
+author: "Erick Navarro"
+date: "2023-01-18"
+output: pdf_document
+---
+In this section, I will make a model to predict the presence of polycystic ovary syndrom (PCOS). 
+
+As a first step, I will revise the variables that we have and remove the ones that I consider irrelevant. 
+
+```{r setup, include=FALSE}
+library(here)
+library(tidyverse)
+
+load(here("data.Rdata"))
+
+colnames(data)
+
+```
+
+Looking at the variables, I would like to build a data-driven model so that I don't remove variables that could have predictive power in my analysis because of lack of investigation in the field. However, there's one variable that I do not consider right to include 
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

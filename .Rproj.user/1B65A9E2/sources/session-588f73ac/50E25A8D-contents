@@ -1,0 +1,278 @@
+---
+title: "Pima data"
+author: "Aline Talhouk"
+date: "2023-01-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The PIMA dataset
+For this example we will use the Pima dataset, included in the MASS library:
+
+>A population of women who were at least 21 years old, of Pima Indian heritage and living near Phoenix, Arizona, was tested for diabetes according to World Health Organization criteria. The data were collected by the US National Institute of Diabetes and Digestive and Kidney Diseases. We used the 532 complete records after dropping the (mainly missing) data on serum insulin.
+
+The dataset includes the following variables:
+
+
+1	Number of times pregnant
+2	Plasma glucose concentration (glucose tolerance test)
+3	Diastolic blood pressure (mm Hg)
+4	Triceps skin fold thickness (mm)
+5	2-Hour serum insulin (mu U/ml)
+6	Body mass index (weight in kg/(height in m)^2)
+7	Diabetes pedigree function
+8	Age (years)
+9	Class variable (test for diabetes)
+
+The outcome variable is type, indicating whether a person has diabetes. 
+
+The data is split into a train and test set, which we will combine together.
+```{r}
+library(tidyverse)
+library(gridExtra)
+library(plotROC)
+library(arm)
+library(mlbench)
+data("PimaIndiansDiabetes")
+# PimaIndiansDiabetes$glucose <- ifelse(PimaIndiansDiabetes$glucose ==  0, NA, PimaIndiansDiabetes$glucose)
+# PimaIndiansDiabetes$pressure <- ifelse(PimaIndiansDiabetes$pressure ==  0, NA, PimaIndiansDiabetes$pressure)
+# PimaIndiansDiabetes$triceps <- ifelse(PimaIndiansDiabetes$triceps ==  0, NA, PimaIndiansDiabetes$triceps)
+# PimaIndiansDiabetes$triceps <- ifelse(PimaIndiansDiabetes$triceps == 99, NA, PimaIndiansDiabetes$triceps)
+# PimaIndiansDiabetes$insulin <- ifelse(PimaIndiansDiabetes$insulin ==  0, NA, PimaIndiansDiabetes$insulin)
+# PimaIndiansDiabetes$mass <- ifelse(PimaIndiansDiabetes$mass ==  0, NA, PimaIndiansDiabetes$mass)
+
+set.seed(123)
+train.index <- caret::createDataPartition(PimaIndiansDiabetes$diabetes, p = .8, list=FALSE)
+
+train <- PimaIndiansDiabetes[ train.index,]
+valid  <- PimaIndiansDiabetes[-train.index,]
+table(train$diabetes)
+table(valid$diabetes)
+
+```
+
+## RIDGE Regression
+```{r}
+#load required library
+library(glmnet)
+#convert training data to matrix format
+x <- model.matrix(diabetes~.,train)
+
+#convert class to numerical variable
+y <- ifelse(train$diabetes=="pos",1,0)
+
+#perform grid search to find optimal value of lambda
+#family= binomial => logistic regression, alpha=1 => lasso, alpha=0 for ridge
+# check docs to explore other type.measure options
+# 
+ridge.cv <- cv.glmnet(x,y,alpha=0,family="binomial",type.measure = "class" )
+#plot result
+plot(ridge.cv)        
+```
+
+The cv.glmnet function  finds the value of lambda that gives the simplest model but also lies within one standard error of the optimal value of lambda. This value of lambda (lambda.1se) is what we’ll use in the rest of the computation.
+```{r}
+#min value of lambda
+ridge.cv$lambda.min
+
+#best value of lambda
+lambda_RIDGE <- ridge.cv$lambda.1se
+lambda_RIDGE
+
+#regression coefficients
+coef(ridge.cv,s=lambda_RIDGE)
+```
+## LASSO Regression
+```{r}
+
+lasso.cv <- cv.glmnet(x,y,alpha=1,family="binomial",type.measure = "class" )
+#plot result
+plot(lasso.cv) 
+```
+```{r}
+#best value of lambda
+lambda_lasso <- lasso.cv$lambda.1se
+lambda_lasso
+
+#regression coefficients
+coef(lasso.cv,s=lambda_lasso)
+```
+```{r}
+elastic.cv <- cv.glmnet(x,y,alpha=0.3,family="binomial",type.measure = "class" )
+plot(elastic.cv)
+coef(elastic.cv,s=elastic.cv$lambda.1se)
+```
+
+```{r}
+x_test <- model.matrix(diabetes~.,valid)
+
+pred_ridge <- predict(ridge.cv, x_test, type="class", s=lambda_RIDGE) %>% 
+  as.factor() 
+levels(pred_ridge)=c("neg","pos")
+caret::confusionMatrix(pred_ridge,valid$diabetes)
+
+pred_lasso <- predict(lasso.cv, x_test, type="class", s=lambda_lasso) %>% 
+  as.factor() 
+levels(pred_lasso)=c("neg","pos")
+caret::confusionMatrix(pred_lasso,valid$diabetes)
+
+
+```
+# Variable Selection
+## Stepwise methods
+```{r}
+M0 = glm(diabetes ~ 1, data = train, family = binomial)  # Null model
+M1 = glm(diabetes ~ ., data = train, family= binomial)  # Full model
+summary(M1)
+```
+
+Try doing backward selection using AIC first, then using BIC. Do you get the same result?
+
+```{r}
+step.back.aic <-  step(M1, direction = "backward", trace = FALSE, k = 2)
+summary(step.back.aic)
+step.back.bic <-  step(M1, direction = "backward", trace = FALSE, k = log(dim(train)[1]))
+summary(step.back.bic)
+
+
+```
+Now Forward
+
+```{r}
+step.fwd.aic <-  step(M0, scope = list(lower = M0, upper = M1), direction = "forward", trace = FALSE, k = 2)
+summary(step.fwd.aic)
+step.fwd.bic <-  step(M0,scope = list(lower = M0, upper = M1), direction = "forward", trace = FALSE, k = log(dim(train)[1]))
+summary(step.fwd.bic)
+```
+## Exhaustive searches
+```{r}
+library(bestglm)
+x_tr <- train 
+x_tr$diabetes <- ifelse(x_tr$diabetes=="pos",1,0)
+colnames(x_tr)[9] <- "y"
+res.bestglm <-bestglm::bestglm(Xy = x_tr,
+            family = binomial,
+            IC = "AIC",                 # Information criteria for
+            method = "exhaustive")
+
+## Show top 5 models
+res.bestglm$BestModels
+
+summary(res.bestglm$BestModel)
+
+```
+```{r}
+library(rpart)
+tree_mod <- rpart(
+    formula = diabetes ~. ,
+    data    = train,
+    method  = "class"
+)
+tree_mod
+```
+
+
+```{r}
+library(rpart.plot)
+rpart.plot(tree_mod)
+
+```
+```{r}
+plotcp(tree_mod)
+tree_mod$cptable
+```
+
+CP is the complexity parameter.  ( y -axis is the CV error, lower  x-axis is the cost complexity (α) value, upper  x -axis is the number of terminal nodes (i.e., tree size =  |T|). We want to pick the value of CP from the table that corresponds to the minimum xerror value.
+```{r}
+cpt <- as.data.frame.matrix(tree_mod$cptable)
+cpt_val <- cpt$CP[which.min(cpt$xerror)]
+cpt_val
+```
+```{r}
+
+tree_mod_opt <- prune(tree_mod, 
+                           cp = cpt_val)
+rpart.plot(tree_mod_opt)
+
+```
+```{r}
+pred <- predict(object = tree_mod_opt,   # model object 
+                newdata = valid,
+                type="class")  # test dataset
+caret::confusionMatrix(pred,valid$diabetes)
+```
+
+
+```{r}
+cv.tree <- train(
+  diabetes ~ .,
+  data = train,
+  method = "rpart",
+  trControl = trainControl(method = "cv", number = 5),
+  tuneLength = 20
+)
+ggplot(cv.tree)
+```
+
+# Bagging
+```{r}
+# make bootstrapping reproducible
+set.seed(123)
+
+# train bagged model
+tree_bag1 <- ipred::bagging(
+  formula = diabetes ~ .,
+  data = train,
+  nbagg = 100,  
+  coob = TRUE
+  )
+
+tree_bag1
+
+
+```
+```{r}
+#Can also fit with caret
+library(caret)
+library(rpart)
+tree_bag2 <- train(
+  diabetes ~ .,
+  data = train,
+  method = "treebag",
+  trControl = trainControl(method = "cv", number = 10),
+  nbagg = 20,  
+  control = rpart.control(minsplit = 2, cp = 0)
+)
+tree_bag2
+```
+```{r}
+vip::vip(tree_bag2)
+```
+```{r}
+library(randomForest)
+# Train a Random Forest
+set.seed(1)  # for reproducibility
+rf_model <- randomForest(formula = diabetes ~ ., 
+                             data = train)
+                             
+# Print the model output                             
+print(rf_model)
+```
+```{r}
+plot(rf_model)
+```
+```{r}
+rf_pred <- predict(rf_model,
+                   newdata = valid, type="class")
+caret::confusionMatrix(rf_pred, valid$diabetes)
+```
+
+
+```{r}
+vip::vip(rf_model)
+```
+
+
