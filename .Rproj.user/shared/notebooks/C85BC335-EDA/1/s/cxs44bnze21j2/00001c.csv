@@ -1,6 +1,0 @@
-"0",""
-"0","# Plot to identify outliers for respiratory rate (RR)"
-"0","data %>% "
-"0","  ggplot(aes(x = ""rr"", y = rr)) +"
-"0","  geom_jitter(alpha = 0.5) +"
-"0","  xlab("""")"

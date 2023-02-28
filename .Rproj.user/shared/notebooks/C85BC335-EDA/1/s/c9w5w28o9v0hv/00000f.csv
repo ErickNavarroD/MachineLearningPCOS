@@ -1,4 +1,0 @@
-"0","data %>% "
-"0","  ggplot(aes(x = ""prg_ng_m_l"", y = prg_ng_m_l, color = pregnant_y_n)) +"
-"0","  geom_jitter(alpha = 0.5) +"
-"0","  xlab("""")"

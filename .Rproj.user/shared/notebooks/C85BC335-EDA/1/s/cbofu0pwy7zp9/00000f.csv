@@ -1,2 +1,0 @@
-"0","plot_bar(data %>% "
-"0","           select(-patient_file_no))"

@@ -1,2 +1,0 @@
-"0","data[data$patient_file_no == 330,""fsh_m_iu_m_l"" ] = NA"
-"0","data[data$patient_file_no == 330,""fsh_lh"" ] = NA"

@@ -1,5 +1,0 @@
-"0","## LH hormone "
-"0","data %>% "
-"0","  ggplot(aes(x = ""lh"", y = lh)) +"
-"0","  geom_jitter(alpha = 0.5) +"
-"0","  xlab("""")"

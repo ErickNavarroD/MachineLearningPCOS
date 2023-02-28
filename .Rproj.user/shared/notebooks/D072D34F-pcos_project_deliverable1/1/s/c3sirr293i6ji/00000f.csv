@@ -1,4 +1,0 @@
-"0","# Load data files to data frames"
-"0","pcos_data_woinf <- read_excel(""PCOS_data_without_infertility.xlsx"", "
-"0","                        sheet = ""Full_new"")"
-"0","pcos_data_inf <- read.csv(""PCOS_infertility.csv"")"

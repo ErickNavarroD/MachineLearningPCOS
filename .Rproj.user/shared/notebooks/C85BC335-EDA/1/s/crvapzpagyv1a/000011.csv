@@ -1,6 +1,0 @@
-"0",""
-"0","data %>% "
-"0","  ggplot(aes(x = ""bp_diastolic_mm_hg"", y = bp_diastolic_mm_hg)) +"
-"0","  geom_jitter(alpha = 0.5) +"
-"0","  xlab("""")"
-"0",""

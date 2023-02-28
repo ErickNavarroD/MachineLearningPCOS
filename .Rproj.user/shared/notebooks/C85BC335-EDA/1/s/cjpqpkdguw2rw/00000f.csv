@@ -1,5 +1,0 @@
-"0","data %>% "
-"0","  select(c(patient_file_no, i_beta_hcg_m_iu_m_l,ii_beta_hcg_m_iu_m_l, pregnant_y_n)) %>% "
-"0","  pivot_longer(- c(patient_file_no,pregnant_y_n ), names_to = ""test"", values_to = ""data"") %>% "
-"0","  ggplot(aes(x = test, y = data, color = pregnant_y_n)) +"
-"0","  geom_jitter() "

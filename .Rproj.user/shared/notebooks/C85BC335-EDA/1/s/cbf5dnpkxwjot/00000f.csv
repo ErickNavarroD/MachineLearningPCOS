@@ -1,6 +1,0 @@
-"0","data %>% "
-"0","  filter(is.na(fast_food_y_n) | "
-"0","           is.na(marraige_status_yrs) |"
-"0","           is.na(amh_ng_m_l)) %>% "
-"0","  select(c(patient_file_no, fast_food_y_n, marraige_status_yrs, amh_ng_m_l)) %>% "
-"0","  knitr::kable()"
