@@ -1,0 +1,261 @@
+---
+title: "Machine learning to predict polycystic ovary syndrome in South Asian women in primary care: Model development and validation"
+author: "Erick Navarro & Timo Tolppa"
+date: "2023-01-18"
+output: pdf_document
+---
+
+# 1 Introduction and background
+Polycystic ovary syndrome (PCOS) is the most common endocrine disorder of women of reproductive age affecting between 5-18% of women.[1,2] This complex multisystem disease is characterized by irregular menstrual periods, androgen excess and enlarged polycystic ovaries, and is associated with infertility, mental health disorders, obesity, dyslipidaemia, type 2 diabetes mellitus, low vitamin D3 levels and a higher risk of cardiovascular disease.[2-4] The disease has a substantial negative effect on individuals' quality of life and health status, and thus early diagnosis and effective specialist treatment is crucial.[1]
+  Diagnosis of PCOS is confirmed by the presence of two out of three criteria: irregular cycles, polycystic ovary morphology (identified with a transvaginal ultrasound), and hyperandrogenism (based on either blood tests or clinical history suggestive of acne, hair loss and excess hair growth).[2] These diagnostic criteria were established largely based on studies from White women and limited existing evidence suggests that clinical features vary between different ethnic groups.[1,3] For example, South Asian women with PCOS have been shown to have lower body mass index with increased central obesity and higher prominence of hirsutism than White women. Therefore, a greater understanding of clinical features that are important for a diagnosis of PCOS from a more diverse ethnic population is required.
+  Access to specialist care in many areas of the world, including the state of Kerala in India, is poor.[5] Therefore, primary care physicians have to accurately assess women based solely on their clinical history and refer women suspected of PCOS to specialist testing, which includes hormonal blood tests and transvaginal ultrasound at centers far away from their homes. Travel to specialist centers can also incur substantial costs for patients and their families, which may deter them from attending appointments.[5] To avoid unnecessary testing, referrals and cost, a diagnostic tool to help primary care physicians predict the need for further confirmatory testing for patients highly likely to have PCOS would be beneficial.[1] 
+  Machine learning models have been used to create diagnostic prediction tools in various disciplines.[6,7] These models are particularly helpful in diseases where uncertainty exists about the importance of symptoms and test results in the diagnosis, as is the case with PCOS. Previous machine learning studies in PCOS have identified laboratory results and gene biomarkers relevant to the diagnosis of PCOS, however, this information is often not available to primary care physicians deciding whether to refer women for further testing or not.[8-9]
+
+# 2 Objectives
+This project aims to develop and validate a machine learning model to help primary care physicians predict the need for South Asian patients to undergo further testing based on their clinical history in order to diagnose polycystic ovary syndrome. Prediction models developed using logistic regression, elastic net and random forest will be compared based on their ability to screen out true negative cases (i.e. specificity) to ensure all potential PCOS patients are referred for further testing. Prediction models based on patient history will also be compared to models developed using information obtained through clinical examination, blood tests and transvaginal ultrasound for overall accuracy (i.e. F1 and area under the curve) to understand the benefit of additional information for diagnostic prediction. Finally, variable importance in prediction models will be used to understand the most important predictive variables for PCOS in a South Asian population.
+
+# References
+[1] Joham AE, Norman RJ, Stener-Victorin E, et al. Polycystic ovary syndrome. Lancet Diabetes Endocrinol. 2022;10(9):668-680. doi:10.1016/S2213-8587(22)00163-2
+[2] Teede HJ, Misso ML, Costello MF, et al. Recommendations from the international evidence-based guideline for the assessment and management of polycystic ovary syndrome. Fertil Steril. 2018;110(3):364-379. doi:10.1016/j.fertnstert.2018.05.004
+[3] Sendur SN, Yildiz BO. Influence of ethnicity on different aspects of polycystic ovary syndrome: a systematic review. Reprod Biomed Online. 2021;42(4):799-818. doi:10.1016/j.rbmo.2020.12.006
+[4] Morgante G, Darino I, Spanò A, et al. PCOS Physiopathology and Vitamin D Deficiency: Biological Insights and Perspectives for Treatment. J Clin Med. 2022;11(15):4509. doi:10.3390/jcm11154509
+[5] Muraleedharan M and Chandak AO. Emerging challenges in the health systems of Kerala, India: qualitative analysis of literature reviews. J Health Res. 2022;36(2):242-54. doi:10.1108/JHR-04-2020-0091
+[6] Álvarez JD, Matias-Guiu JA, Cabrera-Martín MN, Risco-Martín JL, Ayala JL. An application of machine learning with feature selection to improve diagnosis and classification of neurodegenerative disorders. BMC Bioinformatics. 2019;20(1):491. doi:10.1186/s12859-019-3027-7
+[7] Vaid A, Somani S, Russak AJ, et al. Machine Learning to Predict Mortality and Critical Events in a Cohort of Patients With COVID-19 in New York City: Model Development and Validation. J Med Internet Res. 2020;22(11):e24018. doi:10.2196/24018
+[8] Xie NN, Wang FF, Zhou J, Liu C, Qu F. Establishment and Analysis of a Combined Diagnostic Model of Polycystic Ovary Syndrome with Random Forest and Artificial Neural Network. Biomed Res Int. 2020;2020:2613091. doi:10.1155/2020/2613091
+[9] Silva IS, Ferreira CN, Costa LBX, et al. Polycystic ovary syndrome: clinical and laboratory variables related to new phenotypes using machine-learning models. J Endocrinol Invest. 2022;45(3):497-505. doi:10.1007/s40618-021-01672-8
+
+# 3 Methods 
+
+# Results
+## Exploratory Data Analysis
+This is the first step of the course project of developing a model to diagnose PCOS. On this section, I will explore the dataset, clean it, and understand its variables. 
+
+### Load and clean the data
+
+First, I will load the packages that I will use throughout the analysis and the data. 
+
+```{r load packages and dataset, message=FALSE}
+library(tidyverse)
+library(here)
+library(readxl)
+library(janitor)
+library(DataExplorer)
+library(knitr)
+
+data = read_excel(here("PCOS_data_without_infertility.xlsx"), sheet = "Full_new") %>% 
+  clean_names()
+```
+
+Then, I will take a look at the data, remove redundant variables, and make sure that each column is formatted in the right data type. 
+
+```{r}
+glimpse(data)
+```
+
+By taking a quick look at the data, I can observe that sl_no and patient_file have apparently the same information. Also, the last column (x45) seems to be empty. I will remove those variables and change the format of the variables when needed. 
+
+```{r Check the variables}
+#looks like sl_no and patient_file_no are the same column? 
+all(identical(data$sl_no, data$patient_file_no))
+#Also, column x45 looks like empty. I checked the excel file and it is an empty column
+
+#Clean and change the format of the dataset
+data = data %>% 
+  select(-c(sl_no, x45)) %>% 
+  mutate(patient_file_no = as.character(patient_file_no),
+         pcos_y_n = as.factor(pcos_y_n),
+         ii_beta_hcg_m_iu_m_l = case_when(ii_beta_hcg_m_iu_m_l == "1.99."~ "1.99", #I found
+                                          #this typo when exploring the missing data and
+                                          # checking the excel file of said individual
+                                          TRUE ~ ii_beta_hcg_m_iu_m_l),
+         ii_beta_hcg_m_iu_m_l = as.numeric(ii_beta_hcg_m_iu_m_l),
+         amh_ng_m_l = as.numeric(amh_ng_m_l),
+         #Recode the blood group to the right variable
+         blood_group = case_when(blood_group == 11 ~ "A+",
+                                 blood_group == 12 ~ "A-",
+                                 blood_group == 13 ~ "B+",
+                                 blood_group == 14 ~ "B-",
+                                 blood_group == 15 ~ "O+",
+                                 blood_group == 16 ~ "O-",
+                                 blood_group == 17 ~ "AB+",
+                                 blood_group == 18 ~ "AB-",),
+         pregnant_y_n = as.factor(pregnant_y_n),
+         weight_gain_y_n = as.factor(weight_gain_y_n),
+         hair_growth_y_n = as.factor(hair_growth_y_n),
+         skin_darkening_y_n = as.factor(skin_darkening_y_n),
+         hair_loss_y_n = as.factor(hair_loss_y_n),
+         pimples_y_n = as.factor(pimples_y_n),
+         fast_food_y_n = as.factor(fast_food_y_n),
+         reg_exercise_y_n = as.factor(reg_exercise_y_n))
+
+glimpse(data)
+```
+
+Now the data is in the right format, so we can proceed to plot it and explore it.
+
+### Explore missing values
+
+As a first step of the exploration, I will check the missingness of each variable in my dataset. 
+```{r plot missing data, fig.dim = c(8, 10)}
+plot_missing(data)
+```
+
+We can see that there is a missing value in the variables fast_food_y_n, marriage_status_yrs and amh_ng_m_l. I will explore if it's missing in the same person
+
+```{r}
+data %>% 
+  filter(is.na(fast_food_y_n) | 
+           is.na(marraige_status_yrs) |
+           is.na(amh_ng_m_l)) %>% 
+  select(c(patient_file_no, fast_food_y_n, marraige_status_yrs, amh_ng_m_l)) %>% 
+  knitr::kable()
+```
+
+We can observe that the individuals with missing observations are different. I will flag individuals 157, 306 and 456 in case this creates a problem later in the analysis, but since each of them have only one missing variable, I don't think it's needed to remove them. 
+
+### Explore variation of continuous variables
+
+Next, I will explore the variability of the continuous variables in the dataset. 
+```{r}
+plot_histogram(data)
+```
+
+We can observe that the variables prg_ng_m_l and vit_d3_ng_m_l have almost zero variation. I will explore them more in detail. 
+```{r}
+data %>% 
+  ggplot(aes(x = "prg_ng_m_l", y = prg_ng_m_l)) +
+  geom_jitter(alpha = 0.5) +
+  xlab("")
+
+data %>% 
+  ggplot(aes(x = "vit_d3_ng_m_l", y = vit_d3_ng_m_l)) +
+  geom_jitter(alpha = 0.5) +
+  xlab("")
+```
+
+We have 5 and 2 samples with a value different than 0 in prg_ng_m_l and vit_d3_ng_m_l, respectively. Then, I decided to remove them before I conduct the analysis, since they won't likely be informative.
+```{r}
+data = data %>% 
+  select(-c(vit_d3_ng_m_l,prg_ng_m_l))
+```
+
+### Explore variation of categorical variables
+Next, I will explore the variability of the categorical variables.
+
+```{r}
+plot_bar(data %>% 
+           select(-patient_file_no))
+```
+We can observe that none of the variables show an important lack of variation. Then, I won't remove any of them. 
+
+### Explore covariation
+
+Finally, I will explore the covariation of all of the variables in the dataset to see if there's any strong correlation between some of my variables that need to be accounted for. 
+
+```{r,  fig.dim = c(8, 10)}
+plot_correlation(data %>% 
+                   select(-patient_file_no), 
+                 type = 'all',
+                 cor_args = list("use" = "complete.obs"))
+```
+
+Since I don't see any strong correlation between distinct variables. I can see some degree of correlation between discrete variables, such as skin darkening, hair growth, weight gain and PCOS. I will keep this in mind in the future of the analysis, but I won't remove any variable at this point based on this criteria. 
+
+### Conclusion
+This EDA was very helpful to familiarize myself with the data, clean it, and identify any pattern that could potentially need to be addressed in the future of my analysis. I was able to flag individuals with missing observations, remove variables with a lack of variability, and observe the correlation between my variables. 
+
+
+## Logistic regression model
+
+# Supplementary information
+## Data dictionary 
+
+
+
+```{r}
+#Drop variables not used for modeling
+data <- subset(data, select = -c(blood_group, 
+                                 pulse_rate, 
+                                 rr, 
+                                 hb, 
+                                 marriage_status, 
+                                 pregnant, 
+                                 i_betahcg, 
+                                 ii_betahcg, 
+                                 tsh)
+               )
+
+# Create dataset 1 using only variables obtained through through patient history
+data_set1 <- subset(data, select = c(pcos,
+                                     age,
+                                     cycle,
+                                     cycle_length,
+                                     no_of_abortions,
+                                     weight_gain,
+                                     hair_growth,
+                                     skin_darkening,
+                                     hair_loss,
+                                     pimples,
+                                     fast_food,
+                                     reg_exercise)
+               )
+
+# Create dataset 2 using variables obtained through patient history and clinical examination
+data_set2 <- subset(data, select = c(pcos,
+                                     age,
+                                     cycle,
+                                     cycle_length,
+                                     no_of_abortions,
+                                     weight_gain,
+                                     hair_growth,
+                                     skin_darkening,
+                                     hair_loss,
+                                     pimples,
+                                     fast_food,
+                                     reg_exercise,
+                                     weight,
+                                     height,
+                                     bmi,
+                                     hip,
+                                     waist,
+                                     waist_hip_ratio,
+                                     bp_systolic,
+                                     bp_diastolic)
+                    )
+
+# Create dataset 3 using variables obtained through patient history, clinical examination and blood tests
+data_set3 <- subset(data, select = c(pcos,
+                                     age,
+                                     cycle,
+                                     cycle_length,
+                                     no_of_abortions,
+                                     weight_gain,
+                                     hair_growth,
+                                     skin_darkening,
+                                     hair_loss,
+                                     pimples,
+                                     fast_food,
+                                     reg_exercise,
+                                     weight,
+                                     height,
+                                     bmi,
+                                     hip,
+                                     waist,
+                                     waist_hip_ratio,
+                                     bp_systolic,
+                                     bp_diastolic,
+                                     fsh,
+                                     lh,
+                                     fsh_lh_ratio,
+                                     amh,
+                                     prl,
+                                     vitd3,
+                                     prg,
+                                     rbs)
+                    )
+
+# Create dataset 4 using variables obtained through patient history, clinical examination, blood tests and ultrasound
+data_set4 <- subset(data, select = -c(id))
+```
+
