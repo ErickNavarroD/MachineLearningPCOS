@@ -293,7 +293,8 @@ pheatmap(metrics %>%
          cluster_cols = F, 
          scale = "column",
          display_numbers = round(metrics %>% 
-           select(c(Sensitivity, Specificity, F1, AUC)),2)
+           select(c(Sensitivity, Specificity, F1, AUC)),2),
+         angle_col = 0
          )
 ```
 
